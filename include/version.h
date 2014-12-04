@@ -75,9 +75,6 @@ ix_version_find_start(const char* buf, size_t len);
 /*
  * Parses a muse version string.
  *
- * This is designed to be used with ix_find_version_start, i.e. it
- * doesn't bother verifying that the version string begins with "MUSE ".
- *
  * If this returns negative, the contents of cfg are undefined.
  */
 ix_vp_ret

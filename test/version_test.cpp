@@ -65,12 +65,14 @@ TEST(VersionTest, VersionParseNeedMorePrefix) {
   EXPECT_THROW(version::parse(s), version::NeedMore);
   while (s.size()) {
     s.pop_back();
-    EXPECT_THROW(version::parse(s), version::NeedMore);
+    EXPECT_THROW(version::parse(s), version::NeedMore) << '"' << s << '"';
   }
 }
 
-// TODO(soon): malicious version strings, near misses, invalid types
-TEST(VersionTest, DISABLED_VersionParseBadStrings) {}
+TEST(VersionTest, VersionParseBadStrings) {
+  EXPECT_THROW(version::parse("MUBAD"), version::BadStr);
+  // TODO(soon): malicious version strings, near misses, invalid types
+}
 
 TEST(VersionTest, VersionParseMinimal) {
   auto ver = version::parse(MUSE_MINVER "\n");

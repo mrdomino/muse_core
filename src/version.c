@@ -290,15 +290,23 @@ _parse_label_dash(const char* buf, size_t len,
 ix_vp_ret
 ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 {
-  ssize_t fed = 5, sen;
+  ssize_t fed = 0, sen;
 
   if (len >= SSIZE_MAX) {
     return _vp_fail(IX_VP_FAIL);
   }
   else sen = (ssize_t)len;
 
-  if (sen <= fed) {
-    return _vp_fail(IX_VP_NEED_MORE);
+  {
+      size_t pre = sizeof muse_spc > len ? len : sizeof muse_spc;
+
+      if (memcmp(buf, muse_spc, pre) != 0) {
+          return _vp_fail(IX_VP_BAD_STR);
+      }
+      if (len <= sizeof muse_spc) {
+          return _vp_fail(IX_VP_NEED_MORE);
+      }
+      fed += sizeof muse_spc;
   }
 
   switch (buf[fed]) {
