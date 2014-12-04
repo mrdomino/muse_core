@@ -10,7 +10,7 @@ OFLAGS = -O0 -g
 WFLAGS = -Wall -Wextra -Werror
 CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -fPIC -std=c99 -pedantic
 CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
-TESTFLAGS = -Wl,-rpath=. $(CXXFLAGS) -pthread
+TESTFLAGS = $(CXXFLAGS) -pthread
 LDFLAGS = $(OFLAGS) $(LIBS)
 
 SRCOBJS = src/util.o \
@@ -42,7 +42,7 @@ libgtest_main.a:
 	  $(GTEST_SRC)/src/gtest_main.cc
 
 unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
-	$(CXX) -o unittests $(TESTFLAGS) -L. -lmusecore -lgtest -lgtest_main \
+	$(CXX) -o unittests -Wl,-rpath=. $(TESTFLAGS) -L. -lmusecore -lgtest -lgtest_main \
 	  $(TESTOBJS)
 
 clean:
