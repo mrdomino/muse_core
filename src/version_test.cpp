@@ -27,7 +27,8 @@ TEST_F(VersionTest, FindStartOfMinVer) {
   EXPECT_EQ(0, ix_version_find_start(min_ver.c_str(), min_ver.size()));
   auto garbage = string{"blargh 1234 \x05\x01\x07"};
   auto gmv = garbage + min_ver;
-  EXPECT_EQ(garbage.size(), ix_version_find_start(gmv.c_str(), gmv.size()));
+  EXPECT_EQ(static_cast<ssize_t>(garbage.size()),
+            ix_version_find_start(gmv.c_str(), gmv.size()));
 }
 
 TEST_F(VersionTest, VersionParseNeedMorePrefix) {

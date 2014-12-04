@@ -10,7 +10,6 @@ OFLAGS = -O0 -g
 WFLAGS = -Wall -Wextra -Werror
 CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -fPIC -std=c99 -pedantic
 CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
-TESTFLAGS = $(CXXFLAGS) -pthread
 LDFLAGS = $(OFLAGS) $(LIBS)
 
 SRCOBJS = src/version.o
@@ -33,10 +32,12 @@ $(LIB): $(SRCOBJS)
 	$(CXX) -shared -o $(LIB) $(SRCOBJS)
 
 libgtest.a:
-	$(CXX) -static -c -o libgtest.a $(TESTFLAGS) $(GTEST_SRC)/src/gtest-all.cc
+	$(CXX) -static -c -o libgtest.a $(CXXFLAGS) -I$(GTEST_SRC) -pthread \
+	  -Wno-missing-field-initializers $(GTEST_SRC)/src/gtest-all.cc
 
 libgtest_main.a:
-	$(CXX) -static -c -o libgtest_main.a $(TESTFLAGS) $(GTEST_SRC)/src/gtest_main.cc
+	$(CXX) -static -c -o libgtest_main.a $(CXXFLAGS) -I$(GTEST_SRC) -pthread \
+	  $(GTEST_SRC)/src/gtest_main.cc
 
 unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
 	$(CXX) -o unittests $(TESTFLAGS) -L. -lmusecore -lgtest -lgtest_main $(TESTOBJS)
