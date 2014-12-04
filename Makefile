@@ -3,7 +3,7 @@ ifeq ($(UNAME),Darwin)
   OS=OSX
 else ifeq ($(UNAME),Linux)
   OS=LINUX
-else ifeq ($(UNAME),Windows)
+else ifneq (,$(filter CYGWIN% MINGW%,$(UNAME)))
   OS=WIN
 else
   $(error unknown os)
