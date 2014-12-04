@@ -39,11 +39,11 @@ typedef struct {
   ix_fw_type      fw_type;
 } ix_muse_version;
 
-enum _ix_pv_err {
-  IX_PV_FAIL = -1,
-  IX_PV_NEED_MORE = -2,
-  IX_PV_BAD_STR = -3,
-  IX_PV_BAD_VER = -4
+enum _ix_vp_err {
+  IX_VP_FAIL = -1,
+  IX_VP_NEED_MORE = -2,
+  IX_VP_BAD_STR = -3,
+  IX_VP_BAD_VER = -4
 };
 
 /*
@@ -55,7 +55,7 @@ enum _ix_pv_err {
  */
 typedef union {
   ssize_t          end;
-  enum _ix_pv_err  err;
+  enum _ix_vp_err  err;
 } ix_vp_ret;
 
 
