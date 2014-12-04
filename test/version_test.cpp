@@ -58,7 +58,7 @@ TEST(VersionTest, FindStartOfMinVer) {
   // TODO(soon): test strings containing '\0'
 }
 
-TEST(VersionTest, VersionParseNeedMorePrefix) {
+TEST(VersionTest, ParseNeedMorePrefix) {
   auto s = std::string{MUSE_MINVER};
   // MUSE_MINVER ends in a number, so we'd need to see one more char to know we
   // had the whole thing
@@ -69,12 +69,12 @@ TEST(VersionTest, VersionParseNeedMorePrefix) {
   }
 }
 
-TEST(VersionTest, VersionParseBadStrings) {
+TEST(VersionTest, ParseBadStrings) {
   EXPECT_THROW(version::parse("MUBAD"), version::BadStr);
   // TODO(soon): malicious version strings, near misses, invalid types
 }
 
-TEST(VersionTest, VersionParseMinimal) {
+TEST(VersionTest, ParseMinimal) {
   auto ver = version::parse(MUSE_MINVER "\n");
   EXPECT_EQ(IX_IMG_APP, ver.img_type);
   EXPECT_EQ(0, ver.hw_version.x);
@@ -89,10 +89,9 @@ TEST(VersionTest, VersionParseMinimal) {
 }
 
 // TODO(soon): at least consumer, research + app, boot, test + a few numbers
-TEST(VersionTest, DISABLED_VersionParseFields) {}
+TEST(VersionTest, DISABLED_ParseFields) {}
 
-TEST(VersionTest, DISABLED_RejectsOtherProtoVersions) {
-  // TODO(soon): expect IX_PV_BAD_VER
-}
+// TODO(soon): expect IX_PV_BAD_VER
+TEST(VersionTest, DISABLED_ParseRejectsOtherProtoVersions) {}
 
 }  // namespace
