@@ -10,12 +10,12 @@ OFLAGS = -O0 -g
 WFLAGS = -Wall -Wextra -Werror
 CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -fPIC -std=c99 -pedantic
 CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
-TESTFLAGS = $(CXXFLAGS) -pthread
+TESTFLAGS = -Wl,-rpath=. $(CXXFLAGS) -pthread
 LDFLAGS = $(OFLAGS) $(LIBS)
 
 SRCOBJS = src/version.o
 
-TESTOBJS = src/version_test.o
+TESTOBJS = test/version_test.o
 
 ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
@@ -24,7 +24,7 @@ LIB = libmusecore.so
 all: $(LIB) test
 
 test: unittests
-	LD_LIBRARY_PATH=. ./unittests
+	./unittests
 
 $(ALLOBJS): include/all.h \
             include/version.h
