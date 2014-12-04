@@ -48,4 +48,7 @@ unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
 
-.PHONY: all clean test
+distclean:
+	rm -f libgtest.a libgtest_main.a
+
+.PHONY: all clean distclean test
