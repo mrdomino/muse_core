@@ -154,14 +154,12 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
   fed += ret;                                               \
 } while (0)
 
-#define PARSE_DOT(fed, len, buf) do {           \
-  if (buf[fed] != '.') {                        \
-    return _vp_fail(IX_VP_BAD_STR);             \
-  }                                             \
-  fed++;                                        \
-} while (0)
-
-
+#define PARSE_CH(fed, len, buf, ch) do {  \
+  if (buf[fed] != (ch)) {                 \
+    return _vp_fail(IX_VP_BAD_STR);       \
+  }                                       \
+  fed++;                                  \
+} while(0)
 
 static ix_vp_ret
 _parse_version_xy(const char* buf, size_t len, void* p)
@@ -171,7 +169,7 @@ _parse_version_xy(const char* buf, size_t len, void* p)
 
   assert(len < SSIZE_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
-  PARSE_DOT(fed, sen, buf);
+  PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->y);
 
   return (ix_vp_ret){ .end = fed };
@@ -185,9 +183,9 @@ _parse_version_xyz(const char* buf, size_t len, void* p)
 
   assert(len < SSIZE_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
-  PARSE_DOT(fed, sen, buf);
+  PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->y);
-  PARSE_DOT(fed, sen, buf);
+  PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->z);
 
   return (ix_vp_ret){ .end = fed };
@@ -320,37 +318,28 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
   {
     ix_vp_ret r;
 
-#   define VP_LABEL_DASH(label, parse_fn, addr)     \
-    assert(len < SSIZE_MAX && fed <= (ssize_t)len); \
-    r = _parse_label_dash(buf + fed, sen - fed,     \
-                          label, sizeof label,      \
-                          parse_fn, addr);          \
-    if (r.end < 0) {                                \
-      return r;                                     \
-    }                                               \
+#   define VP_LABEL_DASH(label, parse_fn, addr) \
+    assert(fed <= sen);                         \
+    r = _parse_label_dash(buf + fed, sen - fed, \
+                          label, sizeof label,  \
+                          parse_fn, addr);      \
+    if (r.end < 0) {                            \
+      return r;                                 \
+    }                                           \
     else fed += r.end
 
-#   define VP_SPACE()                   \
-    if (len <= (size_t)fed) {           \
-      return _vp_fail(IX_VP_NEED_MORE); \
-    }                                   \
-    else if (buf[fed] != ' ') {         \
-      return _vp_fail(IX_VP_BAD_STR);   \
-    }                                   \
-    else fed += 1
-
     VP_LABEL_DASH(hw, _parse_version_xy, &cfg->hw_version);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(fw, _parse_version_xyz, &cfg->fw_version);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(bl, _parse_version_xyz, &cfg->bl_version);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(fw_build, _parse_uint16_t, &cfg->build_number);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(fw_target_hw, _parse_version_xy, &cfg->target_hw_version);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(fw_type, _parse_fw_type, &cfg->fw_type);
-    VP_SPACE();
+    PARSE_CH(fed, sen, buf, ' ');
     {
       uint16_t pv;
 
