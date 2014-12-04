@@ -3,12 +3,39 @@ extern "C" {
 }
 
 #include <gtest/gtest.h>
+
+#include <exception>
 #include <string>
 
-using std::string;
-
-
 namespace {
+
+class ParseVersion {
+public:
+  struct Failure : ::std::exception {};
+
+  struct NeedMore : Failure {};
+  struct BadStr : Failure {};
+  struct BadVer : Failure {};
+
+  static ix_muse_version parse(std::string const& s) {
+    ix_muse_version out;
+    auto ret = ix_version_parse(s.c_str(), s.size(), &out);
+    if (ret.end >= 0) {
+      return out;
+    }
+    else switch (ret.err) {
+    default: assert(false);
+    case IX_VP_FAIL:
+      throw Failure();
+    case IX_VP_NEED_MORE:
+      throw NeedMore();
+    case IX_VP_BAD_STR:
+      throw BadStr();
+    case IX_VP_BAD_VER:
+      throw BadVer();
+    }
+  }
+};
 
 class VersionTest : public ::testing::Test {
 protected:
@@ -21,9 +48,9 @@ TEST_F(VersionTest, FindNoneIfNone) {
 }
 
 TEST_F(VersionTest, FindStartOfMinVer) {
-  auto min_ver = string{MUSE_MINVER};
+  auto min_ver = std::string{MUSE_MINVER};
   EXPECT_EQ(0, ix_version_find_start(min_ver.c_str(), min_ver.size()));
-  auto garbage = string{"blargh 1234 \x05\x01\x07"};
+  auto garbage = std::string{"blargh 1234 \x05\x01\x07"};
   auto gmv = garbage + min_ver;
   EXPECT_EQ(static_cast<ssize_t>(garbage.size()),
             ix_version_find_start(gmv.c_str(), gmv.size()));
@@ -31,31 +58,30 @@ TEST_F(VersionTest, FindStartOfMinVer) {
 }
 
 TEST_F(VersionTest, VersionParseNeedMorePrefix) {
-  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE ", 5, &version).err);
-  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE A", 6, &version).err);
-  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE AP", 7, &version).err);
-  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP", 8, &version).err);
-  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP ", 9, &version).err);
-  EXPECT_EQ(IX_VP_NEED_MORE,
-            ix_version_parse("MUSE APP HW-0", 13, &version).err);
+  EXPECT_THROW(ParseVersion::parse("MUSE"), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE "), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE A"), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE AP"), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE APP"), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE APP "), ParseVersion::NeedMore);
+  EXPECT_THROW(ParseVersion::parse("MUSE APP HW-0"), ParseVersion::NeedMore);
 }
 
 // TODO malicious version strings, near misses, invalid types
 TEST_F(VersionTest, DISABLED_VersionParseBadStrings) {}
 
 TEST_F(VersionTest, VersionParseMinimal) {
-  auto min_ver = string{MUSE_MINVER "\n"};
-  ASSERT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
-  EXPECT_EQ(IX_IMG_APP, version.img_type);
-  EXPECT_EQ(0, version.hw_version.x);
-  EXPECT_EQ(0, version.hw_version.y);
-  EXPECT_EQ(0, version.fw_version.x);
-  EXPECT_EQ(0, version.fw_version.y);
-  EXPECT_EQ(0, version.fw_version.z);
-  EXPECT_EQ(0, version.build_number);
-  EXPECT_EQ(0, version.target_hw_version.x);
-  EXPECT_EQ(0, version.target_hw_version.y);
-  EXPECT_EQ(IX_FW_UNKNOWN, version.fw_type);
+  auto ver = ParseVersion::parse(MUSE_MINVER "\n");
+  EXPECT_EQ(IX_IMG_APP, ver.img_type);
+  EXPECT_EQ(0, ver.hw_version.x);
+  EXPECT_EQ(0, ver.hw_version.y);
+  EXPECT_EQ(0, ver.fw_version.x);
+  EXPECT_EQ(0, ver.fw_version.y);
+  EXPECT_EQ(0, ver.fw_version.z);
+  EXPECT_EQ(0, ver.build_number);
+  EXPECT_EQ(0, ver.target_hw_version.x);
+  EXPECT_EQ(0, ver.target_hw_version.y);
+  EXPECT_EQ(IX_FW_UNKNOWN, ver.fw_type);
 }
 
 // TODO at least consumer, research + app, boot, test + a few numbers
