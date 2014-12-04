@@ -47,7 +47,8 @@ _vp_fail(enum _ix_vp_err code)
   return r;
 }
 
-/* TODO move me */
+/* TODO(someday): move me */
+/* Also either write a damn parser API or figure out how to use hammer */
 /*
  * Parse a base-10 number into a uint16_t.
  *
