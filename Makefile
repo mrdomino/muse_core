@@ -22,6 +22,7 @@ ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
 LIB = libmusecore.so
 
+
 all: $(LIB) test
 
 test: unittests
