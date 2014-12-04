@@ -29,6 +29,12 @@ ix_version_find_start(const char* buf, size_t len)
   return -1;
 }
 
+static ix_vp_ret
+_vp_fail(enum _ix_vp_err code)
+{
+  return (ix_vp_ret){ .end = -1, .err = code };
+}
+
 /* TODO move me */
 /*
  * Parse a base-10 number into a uint16_t.
@@ -138,17 +144,17 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
 #define PARSE_UINT16(fed, len, buf, addr) do {              \
   ssize_t ret = _parse_uint16(buf + fed, len - fed, addr);  \
   if (fed + ret == len || (ret == -1 && errno == EAGAIN)) { \
-    return (ix_vp_ret){ .err = IX_VP_NEED_MORE };           \
+    return _vp_fail(IX_VP_NEED_MORE);                       \
   }                                                         \
   if (ret == -1) {                                          \
-    return (ix_vp_ret){ .err = IX_VP_FAIL };                \
+    return _vp_fail(IX_VP_FAIL);                            \
   }                                                         \
   fed += ret;                                               \
 } while (0)
 
 #define PARSE_DOT(fed, len, buf) do {           \
   if (buf[fed] != '.') {                        \
-    return (ix_vp_ret){ .err = IX_VP_BAD_STR }; \
+    return _vp_fail(IX_VP_BAD_STR);             \
   }                                             \
   fed++;                                        \
 } while (0)
@@ -162,7 +168,7 @@ _parse_version_xy(const char* buf, size_t len, void* p)
   ssize_t        fed = 0, sen;
 
   if (len > SSIZE_MAX) {
-    return (ix_vp_ret){ .err = IX_VP_FAIL };
+    return _vp_fail(IX_VP_FAIL);
   }
   else sen = (ssize_t)len;
 
@@ -180,7 +186,7 @@ _parse_version_xyz(const char* buf, size_t len, void* p)
   ssize_t fed = 0, sen;
 
   if (len > SSIZE_MAX) {
-    return (ix_vp_ret){ .err = IX_VP_FAIL };
+    return _vp_fail(IX_VP_FAIL);
   }
   else sen = (ssize_t)len;
 
@@ -200,7 +206,7 @@ _parse_uint16_t(const char* buf, size_t len, void* p)
   ssize_t   fed = 0, sen;
 
   if (len > SSIZE_MAX) {
-    return (ix_vp_ret){ .err = IX_VP_FAIL };
+    return _vp_fail(IX_VP_FAIL);
   }
   else sen = (ssize_t)len;
 
@@ -219,7 +225,7 @@ _parse_fw_type(const char* buf, size_t len, void* p)
   (void)buf;
   (void)len;
   (void)fwt;
-  return (ix_vp_ret){ .err = IX_VP_FAIL };
+  return _vp_fail(IX_VP_FAIL);
 }
 
 static ix_vp_ret
@@ -232,14 +238,14 @@ _parse_label_dash(const char* buf, size_t len,
   ix_vp_ret r;
 
   if (len < label_len + 1) {
-    return (ix_vp_ret){ .err = IX_VP_NEED_MORE };
+    return _vp_fail(IX_VP_NEED_MORE);
   }
   if (memcmp(buf, label, label_len) != 0) {
-    return (ix_vp_ret){ .err = IX_VP_BAD_STR };
+    return _vp_fail(IX_VP_BAD_STR);
   }
   fed += label_len;
   if (buf[fed] != '-') {
-    return (ix_vp_ret){ .err = IX_VP_BAD_STR };
+    return _vp_fail(IX_VP_BAD_STR);
   }
   fed += 1;
   r = parse_fn(buf + fed, len - fed, p);
@@ -255,24 +261,24 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
   ssize_t fed = 5, sen;
 
   if (len >= SSIZE_MAX) {
-    return (ix_vp_ret){ .err = IX_VP_FAIL };
+    return _vp_fail(IX_VP_FAIL);
   }
   else sen = (ssize_t)len;
 
   if (sen <= fed) {
-    return (ix_vp_ret){ .err = IX_VP_NEED_MORE };
+    return _vp_fail(IX_VP_NEED_MORE);
   }
 
   switch (buf[fed]) {
   default:
-    return (ix_vp_ret){ .err = IX_VP_BAD_STR };
+    return _vp_fail(IX_VP_BAD_STR);
 # define VP_MATCH(c, rest, typ)                           \
   case c:                                                 \
     if (len < fed + 1 + sizeof rest) {                    \
-      return (ix_vp_ret){ .err = IX_VP_NEED_MORE };       \
+      return _vp_fail(IX_VP_NEED_MORE);                   \
     }                                                     \
     if (memcmp(rest, buf + fed + 1, sizeof rest) != 0) {  \
-      return (ix_vp_ret){ .err = IX_VP_BAD_STR };         \
+      return _vp_fail(IX_VP_BAD_STR);                     \
     }                                                     \
     cfg->img_type = typ;                                  \
     fed += 1 + sizeof rest;                               \
@@ -308,7 +314,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 
       VP_LABEL_DASH(proto, _parse_uint16_t, &pv);
       if (pv != 2) {
-        return (ix_vp_ret){ .err = IX_VP_BAD_VER };
+        return _vp_fail(IX_VP_BAD_VER);
       }
     }
 #   undef VP_LABEL_DASH

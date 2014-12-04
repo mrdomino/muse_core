@@ -53,8 +53,8 @@ enum _ix_vp_err {
  * after the version string. If end < 0, then there was a parse error
  * described by err.
  */
-typedef union {
-  int              end;
+typedef struct {
+  ssize_t          end;
   enum _ix_vp_err  err;
 } ix_vp_ret;
 
