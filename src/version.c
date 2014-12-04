@@ -43,7 +43,8 @@ ix_version_find_start(const char* buf, size_t len)
 static ix_vp_ret
 _vp_fail(enum _ix_vp_err code)
 {
-  return (ix_vp_ret){ .end = -1, .err = code };
+  ix_vp_ret r = { .end = -1, .err = code };
+  return r;
 }
 
 /* TODO move me */
@@ -99,7 +100,7 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
         break;
       }
       else state = _PU_SAW_DIGIT;
-      /* fallthrough */
+      /*@fallthrough@*/
     case _PU_SAW_DIGIT:
       if (isdigit(*buf)) {
         digit = *buf - '0';
@@ -114,7 +115,7 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
         }
       }
       else state = _PU_SAW_NONDIGIT;
-      /* fallthrough unless we consumed a digit */
+      /*@fallthrough@*/
     case _PU_OVER:
     case _PU_SAW_NONDIGIT:
     case _PU_ERR:
