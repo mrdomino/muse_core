@@ -41,7 +41,16 @@ TEST_F(VersionTest, VersionParseNeedMorePrefix) {
 
 TEST_F(VersionTest, VersionParseMinimal) {
   auto min_ver = string{MUSE_MINVER "\n"};
-  EXPECT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
+  ASSERT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
+  EXPECT_EQ(0, version.hw_version.x);
+  EXPECT_EQ(0, version.hw_version.y);
+  EXPECT_EQ(0, version.fw_version.x);
+  EXPECT_EQ(0, version.fw_version.y);
+  EXPECT_EQ(0, version.fw_version.z);
+  EXPECT_EQ(0, version.build_number);
+  EXPECT_EQ(0, version.target_hw_version.x);
+  EXPECT_EQ(0, version.target_hw_version.y);
+  EXPECT_EQ(IX_FW_UNKNOWN, version.fw_type);
 }
 
 } // namespace

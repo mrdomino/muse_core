@@ -13,6 +13,8 @@ static const char fw_target_hw[] = {
   'F', 'W', '_', 'T', 'A', 'R', 'G', 'E', 'T', '_', 'H', 'W'
 };
 static const char fw_type[] = { 'F', 'W', '_', 'T', 'Y', 'P', 'E' };
+static const char onsumer[] = { 'o', 'n', 's', 'u', 'm', 'e', 'r' };
+static const char esearch[] = { 'e', 's', 'e', 'a', 'r', 'c', 'h' };
 static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
 
@@ -221,11 +223,47 @@ static ix_vp_ret
 _parse_fw_type(const char* buf, size_t len, void* p)
 {
   ix_fw_type* fwt = (ix_fw_type*)p;
+  size_t fed = 0;
 
-  (void)buf;
-  (void)len;
-  (void)fwt;
-  return _vp_fail(IX_VP_FAIL);
+  if (len == 0) {
+    return _vp_fail(IX_VP_NEED_MORE);
+  }
+
+  switch (buf[fed]) {
+  default: return _vp_fail(IX_VP_BAD_STR);
+  case ' ':
+    *fwt = IX_FW_UNKNOWN;
+    break;
+
+# define VP_MATCH(c, rest, typ)                           \
+  case c:                                                 \
+    if (len < fed + 1 + sizeof rest) {                    \
+      return _vp_fail(IX_VP_NEED_MORE);                   \
+    }                                                     \
+    if (memcmp(rest, buf + fed + 1, sizeof rest) != 0) {  \
+      *fwt = IX_FW_UNKNOWN;                               \
+    }                                                     \
+    else {                                                \
+      *fwt = typ;                                         \
+      fed += 1 + sizeof rest;                             \
+    }                                                     \
+    break
+
+  VP_MATCH('c', onsumer, IX_FW_CONSUMER);
+  VP_MATCH('r', esearch, IX_FW_RESEARCH);
+# undef VP_MATCH
+  }
+
+  if (*fwt == IX_FW_UNKNOWN) {
+    while (fed < len && islower(buf[fed])) {
+      fed++;
+    }
+    if (fed == len) {
+      return _vp_fail(IX_VP_NEED_MORE);
+    }
+  }
+
+  return (ix_vp_ret){ .end = fed };
 }
 
 static ix_vp_ret
