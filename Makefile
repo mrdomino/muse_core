@@ -17,7 +17,7 @@ GTEST_SRC = 3rdparty/gtest
 
 ifeq ($(OS),LINUX)
   TESTOSFLAGS=-pthread
-  LDOSFLAGS=-Wl,-rpath=.
+  LDOSFLAGS=-pthread -Wl,-rpath=.
   SO_EXT=so
 endif
 ifeq ($(OS),OSX)
