@@ -54,7 +54,7 @@ enum _ix_vp_err {
  * described by err.
  */
 typedef union {
-  ssize_t          end;
+  int              end;
   enum _ix_vp_err  err;
 } ix_vp_ret;
 
