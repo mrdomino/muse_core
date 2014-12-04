@@ -18,7 +18,7 @@ public:
   struct BadStr : Failure {};
   struct BadVer : Failure {};
 
-  static ix_muse_version parse(std::string const& s) {
+  static ix_muse_version parse(::std::string const& s) {
     ix_muse_version out;
     auto ret = ix_version_parse(s.c_str(), s.size(), &out);
     if (ret.end >= 0) {
