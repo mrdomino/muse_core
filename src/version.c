@@ -252,9 +252,14 @@ _parse_label_dash(const char* buf, size_t len,
 ix_vp_ret
 ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 {
-  ssize_t fed = 5;
+  ssize_t fed = 5, sen;
 
-  if (len <= 5) {
+  if (len >= SSIZE_MAX) {
+    return (ix_vp_ret){ .err = IX_VP_FAIL };
+  }
+  else sen = (ssize_t)len;
+
+  if (sen <= fed) {
     return (ix_vp_ret){ .err = IX_VP_NEED_MORE };
   }
 
@@ -283,8 +288,8 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
     ix_vp_ret r;
 
 #   define VP_LABEL_DASH(label, parse_fn, addr)     \
-    assert(len < SSIZE_MAX || fed <= (ssize_t)len); \
-    r = _parse_label_dash(buf + fed, len - fed,     \
+    assert(len < SSIZE_MAX && fed <= (ssize_t)len); \
+    r = _parse_label_dash(buf + fed, sen - fed,     \
                           label, sizeof label,      \
                           parse_fn, addr);          \
     if (r.end < 0) {                                \
