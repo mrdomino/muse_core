@@ -32,7 +32,7 @@ LIBS =
 TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
 OFLAGS = -O0 -g
 WFLAGS = -Wall -Wextra -Werror
-CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -fPIC -std=c99 -pedantic
+CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c99 -pedantic
 CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
 TESTFLAGS = $(CXXFLAGS) $(TESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS) $(LIBS)
@@ -45,7 +45,7 @@ TESTOBJS = test/version_test.o
 
 ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
-LIB = libmuse_core.$(SO_EXT)
+LIB = libmuse_core.a
 
 
 all: $(LIB) test
@@ -57,7 +57,7 @@ $(ALLOBJS): include/all.h \
             include/version.h
 
 $(LIB): $(SRCOBJS)
-	$(CC) -shared -o $(LIB) $(SRCOBJS)
+	ar rcs $(LIB) $(SRCOBJS)
 
 libgtest.a:
 	$(CXX) -static -c -o libgtest.a $(TESTFLAGS) -I$(GTEST_SRC) \
@@ -67,8 +67,8 @@ libgtest_main.a:
 	$(CXX) -static -c -o libgtest_main.a $(TESTFLAGS) -I$(GTEST_SRC) \
 	  $(GTEST_SRC)/src/gtest_main.cc
 
-unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
-	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS)
+unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a libmuse_core.a
+	$(CXXLD) -o unittests $(TESTOBJS) $(LDTESTFLAGS)
 
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
