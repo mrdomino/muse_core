@@ -1,22 +1,47 @@
-CC = clang
+CC = gcc
 LD = $(CC)
-INCS = -Iinclude
+CXX = g++
+CXXLD = $(CXX)
+GTEST_SRC = /usr/src/gtest
+
+INCS = -Iinclude -I$(GTEST_SRC)/include
 LIBS =
-CFLAGS = -O2 $(INCS) -Wall -Wextra -Werror -std=c99 -pedantic
-LDFLAGS = -O2 $(LIBS)
+OFLAGS = -O0 -g
+WFLAGS = -Wall -Wextra -Werror
+CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -fPIC -std=c99 -pedantic
+CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
+TESTFLAGS = $(CXXFLAGS) -pthread
+LDFLAGS = $(OFLAGS) $(LIBS)
 
-OBJS = src/main.o \
-       src/version.o
+SRCOBJS = src/version.o
 
-all: muse
+TESTOBJS = src/version_test.o
 
-$(OBJS): include/all.h \
-         include/version.h
+ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
-muse: $(OBJS)
-	$(LD) $(LDFLAGS) -o muse $(OBJS)
+LIB = libmusecore.so
+
+all: $(LIB) test
+
+test: unittests
+	LD_LIBRARY_PATH=. ./unittests
+
+$(ALLOBJS): include/all.h \
+            include/version.h
+
+$(LIB): $(SRCOBJS)
+	$(CXX) -shared -o $(LIB) $(SRCOBJS)
+
+libgtest.a:
+	$(CXX) -static -c -o libgtest.a $(TESTFLAGS) $(GTEST_SRC)/src/gtest-all.cc
+
+libgtest_main.a:
+	$(CXX) -static -c -o libgtest_main.a $(TESTFLAGS) $(GTEST_SRC)/src/gtest_main.cc
+
+unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
+	$(CXX) -o unittests $(TESTFLAGS) -L. -lmusecore -lgtest -lgtest_main $(TESTOBJS)
 
 clean:
-	@rm -f $(OBJS) muse
+	rm -f $(ALLOBJS) $(LIB) unittests
 
-.PHONY: all clean
+.PHONY: all clean test

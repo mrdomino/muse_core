@@ -1,3 +1,7 @@
+#define MUSE_MINVER "MUSE APP HW-0.0 FW-0.0.0 BL-0.0.0 FW_BUILD-0 " \
+                    "FW_TARGET_HW-0.0 FW_TYPE- PROTO-2"
+
+
 typedef enum {
   IX_IMG_UNKNOWN,
   IX_IMG_BOOT,

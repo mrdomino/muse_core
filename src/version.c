@@ -16,12 +16,8 @@ static const char fw_type[] = { 'F', 'W', '_', 'T', 'Y', 'P', 'E' };
 static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
 
-#define MUSE_MINVER "MUSE APP HW-0.0 FW-0.0.0 BL-0.0.0 FW_BUILD-0 " \
-                    "FW_TARGET_HW-0.0 FW_TYPE- PROTO-2"
-
-
 ssize_t
-ix_find_version_start(const char* buf, size_t len)
+ix_version_find_start(const char* buf, size_t len)
 {
   ssize_t ret;
 
@@ -251,7 +247,7 @@ _parse_label_dash(const char* buf, size_t len,
 }
 
 ix_vp_ret
-ix_parse_version(const char* buf, size_t len, ix_muse_version* cfg)
+ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 {
   ssize_t fed = 5;
 
@@ -311,7 +307,7 @@ ix_parse_version(const char* buf, size_t len, ix_muse_version* cfg)
 }
 
 void
-ix_print_version(FILE* fp, const ix_muse_version* cfg)
+ix_version_print(FILE* fp, const ix_muse_version* cfg)
 {
   (void)cfg;
   fprintf(fp, "tsst\n");
