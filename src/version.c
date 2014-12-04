@@ -167,13 +167,9 @@ static ix_vp_ret
 _parse_version_xy(const char* buf, size_t len, void* p)
 {
   ix_version_xy* ver = (ix_version_xy*)p;
-  ssize_t        fed = 0, sen;
+  ssize_t        fed = 0, sen = (ssize_t)len;
 
-  if (len > SSIZE_MAX) {
-    return _vp_fail(IX_VP_FAIL);
-  }
-  else sen = (ssize_t)len;
-
+  assert(len < SSIZE_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
   PARSE_DOT(fed, sen, buf);
   PARSE_UINT16(fed, sen, buf, &ver->y);
@@ -185,13 +181,9 @@ static ix_vp_ret
 _parse_version_xyz(const char* buf, size_t len, void* p)
 {
   ix_version_xyz* ver = (ix_version_xyz*)p;
-  ssize_t fed = 0, sen;
+  ssize_t fed = 0, sen = (ssize_t)len;
 
-  if (len > SSIZE_MAX) {
-    return _vp_fail(IX_VP_FAIL);
-  }
-  else sen = (ssize_t)len;
-
+  assert(len < SSIZE_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
   PARSE_DOT(fed, sen, buf);
   PARSE_UINT16(fed, sen, buf, &ver->y);
@@ -205,13 +197,9 @@ static ix_vp_ret
 _parse_uint16_t(const char* buf, size_t len, void* p)
 {
   uint16_t* x = (uint16_t*)p;
-  ssize_t   fed = 0, sen;
+  ssize_t   fed = 0, sen = (ssize_t)len;
 
-  if (len > SSIZE_MAX) {
-    return _vp_fail(IX_VP_FAIL);
-  }
-  else sen = (ssize_t)len;
-
+  assert(len < SSIZE_MAX);
   PARSE_UINT16(fed, sen, buf, x);
   return (ix_vp_ret){ .end = fed };
 }
@@ -223,12 +211,13 @@ static ix_vp_ret
 _parse_fw_type(const char* buf, size_t len, void* p)
 {
   ix_fw_type* fwt = (ix_fw_type*)p;
-  size_t fed = 0;
+  ssize_t fed = 0, sen = (ssize_t)len;
+
+  assert(len < SSIZE_MAX);
 
   if (len == 0) {
     return _vp_fail(IX_VP_NEED_MORE);
   }
-
   switch (buf[fed]) {
   default: return _vp_fail(IX_VP_BAD_STR);
   case ' ':
@@ -255,10 +244,10 @@ _parse_fw_type(const char* buf, size_t len, void* p)
   }
 
   if (*fwt == IX_FW_UNKNOWN) {
-    while (fed < len && islower(buf[fed])) {
+    while (fed < sen && islower(buf[fed])) {
       fed++;
     }
-    if (fed == len) {
+    if (fed == sen) {
       return _vp_fail(IX_VP_NEED_MORE);
     }
   }
