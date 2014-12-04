@@ -202,9 +202,6 @@ _parse_uint16_t(const char* buf, size_t len, void* p)
   return (ix_vp_ret){ .end = fed };
 }
 
-#undef PARSE_UINT16
-#undef PARSE_DOT
-
 static ix_vp_ret
 _parse_fw_type(const char* buf, size_t len, void* p)
 {
@@ -348,7 +345,6 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
         return _vp_fail(IX_VP_BAD_VER);
       }
     }
-#   undef VP_SPACE
 #   undef VP_LABEL_DASH
   }
 
