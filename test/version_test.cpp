@@ -39,6 +39,8 @@ TEST_F(VersionTest, VersionParseNeedMorePrefix) {
             ix_version_parse("MUSE APP HW-0", 13, &version).err);
 }
 
+TEST_F(VersionTest, DISABLED_VersionParseBadStrings) {}
+
 TEST_F(VersionTest, VersionParseMinimal) {
   auto min_ver = string{MUSE_MINVER "\n"};
   ASSERT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
@@ -52,5 +54,7 @@ TEST_F(VersionTest, VersionParseMinimal) {
   EXPECT_EQ(0, version.target_hw_version.y);
   EXPECT_EQ(IX_FW_UNKNOWN, version.fw_type);
 }
+
+TEST_F(VersionTest, DISABLED_VersionParseFields) {}
 
 } // namespace
