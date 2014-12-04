@@ -12,14 +12,14 @@ typedef enum {
 } ix_fw_type;
 
 typedef struct {
-  uint8_t x;
-  uint8_t y;
+  uint16_t x;
+  uint16_t y;
 } ix_version_xy;
 
 typedef struct {
-  uint8_t x;
-  uint8_t y;
-  uint8_t z;
+  uint16_t x;
+  uint16_t y;
+  uint16_t z;
 } ix_version_xyz;
 
 /*
@@ -33,7 +33,7 @@ typedef struct {
   uint16_t        build_number;
   ix_version_xy   target_hw_version;
   ix_fw_type      fw_type;
-} ix_muse_config;
+} ix_muse_version;
 
 enum _ix_pv_err {
   IX_PV_FAIL = -1,
@@ -52,7 +52,7 @@ enum _ix_pv_err {
 typedef union {
   ssize_t          end;
   enum _ix_pv_err  err;
-} ix_pv_ret;
+} ix_vp_ret;
 
 
 /*
@@ -61,19 +61,21 @@ typedef union {
  * Returns the start of the string if found, or -1 if none.
  */
 ssize_t
-ix_find_version_start(const char* buf, size_t len);
+ix_version_find_start(const char* buf, size_t len);
 
 /*
- * Parses a muse configuration string.
+ * Parses a muse version string.
  *
  * This is designed to be used with ix_find_version_start, i.e. it
  * doesn't bother verifying that the version string begins with "MUSE ".
+ *
+ * If this returns negative, the contents of cfg are undefined.
  */
-ix_pv_ret
-ix_parse_version(const char* buf, size_t len, ix_muse_config* cfg);
+ix_vp_ret
+ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg);
 
 /*
  * Prints a text representation of cfg to fp.
  */
 void
-ix_print_version(FILE* fp, const ix_muse_config* cfg);
+ix_version_print(FILE* fp, const ix_muse_version* cfg);

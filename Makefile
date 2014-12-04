@@ -6,12 +6,12 @@ CFLAGS = -O2 $(INCS) -Wall -Wextra -Werror -std=c99 -pedantic
 LDFLAGS = -O2 $(LIBS)
 
 OBJS = src/main.o \
-       src/config.o
+       src/version.o
 
 all: muse
 
 $(OBJS): include/all.h \
-         include/config.h
+         include/version.h
 
 muse: $(OBJS)
 	$(LD) $(LDFLAGS) -o muse $(OBJS)
