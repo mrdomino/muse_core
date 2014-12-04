@@ -31,7 +31,7 @@ $(ALLOBJS): include/all.h \
             include/version.h
 
 $(LIB): $(SRCOBJS)
-	$(CXX) -shared -o $(LIB) $(SRCOBJS)
+	$(CC) -shared -o $(LIB) $(SRCOBJS)
 
 libgtest.a:
 	$(CXX) -static -c -o libgtest.a $(TESTFLAGS) -I$(GTEST_SRC) \
