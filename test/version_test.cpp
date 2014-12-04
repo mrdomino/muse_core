@@ -18,6 +18,10 @@ namespace version {
   struct BadStr : Failure {};
   struct BadVer : Failure {};
 
+  ::std::ptrdiff_t find_start(::std::string const& s) {
+    return ix_version_find_start(s.c_str(), s.size());
+  }
+
   ix_muse_version parse(::std::string const& s) {
     ix_muse_version out;
     auto ret = ix_version_parse(s.c_str(), s.size(), &out);
@@ -39,17 +43,18 @@ namespace version {
 }  // namespace version
 
 TEST(VersionTest, FindNoneIfNone) {
-  EXPECT_EQ(-1, ix_version_find_start("", 0));
-  EXPECT_EQ(-1, ix_version_find_start("tsst 1234", strlen("tsst 1234")));
+  EXPECT_EQ(-1, version::find_start(""));
+  EXPECT_EQ(-1, version::find_start("tsst 1234"));
 }
 
 TEST(VersionTest, FindStartOfMinVer) {
   auto min_ver = std::string{MUSE_MINVER};
-  EXPECT_EQ(0, ix_version_find_start(min_ver.c_str(), min_ver.size()));
+  EXPECT_EQ(0, version::find_start(min_ver));
   auto garbage = std::string{"blargh 1234 \x05\x01\x07"};
   auto gmv = garbage + min_ver;
-  EXPECT_EQ(static_cast<ssize_t>(garbage.size()),
-            ix_version_find_start(gmv.c_str(), gmv.size()));
+  EXPECT_EQ(static_cast<std::ptrdiff_t>(garbage.size()),
+            version::find_start(gmv));
+  EXPECT_EQ(2, version::find_start("  MU"));
   // TODO(soon): test strings containing '\0'
 }
 

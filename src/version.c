@@ -23,13 +23,20 @@ static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 ssize_t
 ix_version_find_start(const char* buf, size_t len)
 {
-  ssize_t ret;
+  ssize_t i;
 
-  for (ret = 0; ret + sizeof muse_spc < len; ++ret) {
-    if (memcmp(buf + ret, muse_spc, sizeof muse_spc) == 0) {
-      return ret;
+  for (i = 0; i + sizeof muse_spc < len; ++i) {
+    if (memcmp(buf + i, muse_spc, sizeof muse_spc) == 0) {
+      return i;
     }
   }
+
+  for (i = 1; i < (ssize_t)sizeof muse_spc; ++i) {
+    if (memcmp(buf + len - i, muse_spc, i) == 0) {
+      return i;
+    }
+  }
+
   return -1;
 }
 
