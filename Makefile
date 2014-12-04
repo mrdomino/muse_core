@@ -13,7 +13,8 @@ CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
 TESTFLAGS = -Wl,-rpath=. $(CXXFLAGS) -pthread
 LDFLAGS = $(OFLAGS) $(LIBS)
 
-SRCOBJS = src/version.o
+SRCOBJS = src/util.o \
+          src/version.o
 
 TESTOBJS = test/version_test.o
 
