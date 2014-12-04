@@ -27,6 +27,7 @@ TEST_F(VersionTest, FindStartOfMinVer) {
   auto gmv = garbage + min_ver;
   EXPECT_EQ(static_cast<ssize_t>(garbage.size()),
             ix_version_find_start(gmv.c_str(), gmv.size()));
+  // TODO test strings containing '\0'
 }
 
 TEST_F(VersionTest, VersionParseNeedMorePrefix) {
@@ -39,6 +40,7 @@ TEST_F(VersionTest, VersionParseNeedMorePrefix) {
             ix_version_parse("MUSE APP HW-0", 13, &version).err);
 }
 
+// TODO malicious version strings, near misses, invalid types
 TEST_F(VersionTest, DISABLED_VersionParseBadStrings) {}
 
 TEST_F(VersionTest, VersionParseMinimal) {
@@ -56,6 +58,11 @@ TEST_F(VersionTest, VersionParseMinimal) {
   EXPECT_EQ(IX_FW_UNKNOWN, version.fw_type);
 }
 
+// TODO at least consumer, research + app, boot, test + a few numbers
 TEST_F(VersionTest, DISABLED_VersionParseFields) {}
+
+TEST_F(VersionTest, DISABLED_RejectsOtherProtoVersions) {
+  // expect IX_PV_BAD_VER
+}
 
 } // namespace
