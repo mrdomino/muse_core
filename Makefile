@@ -2,7 +2,7 @@ CC = gcc
 LD = $(CC)
 CXX = g++
 CXXLD = $(CXX)
-GTEST_SRC = /usr/src/gtest
+GTEST_SRC = 3rdparty/gtest
 
 INCS = -Iinclude -I$(GTEST_SRC)/include
 LIBS =
