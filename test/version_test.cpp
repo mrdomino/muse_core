@@ -1,3 +1,5 @@
+// Copyright 2014 Interaxon, Inc.
+
 extern "C" {
 #include "all.h"
 }
