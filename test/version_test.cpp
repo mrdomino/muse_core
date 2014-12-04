@@ -3,15 +3,14 @@ extern "C" {
 }
 
 #include <gtest/gtest.h>
-
 #include <exception>
 #include <string>
 
 namespace {
 
-// TODO move me
+// TODO(someday): move me
 class ParseVersion {
-public:
+ public:
   struct Failure : ::std::exception {};
 
   struct NeedMore : Failure {};
@@ -50,7 +49,7 @@ TEST(VersionTest, FindStartOfMinVer) {
   auto gmv = garbage + min_ver;
   EXPECT_EQ(static_cast<ssize_t>(garbage.size()),
             ix_version_find_start(gmv.c_str(), gmv.size()));
-  // TODO test strings containing '\0'
+  // TODO(soon): test strings containing '\0'
 }
 
 TEST(VersionTest, VersionParseNeedMorePrefix) {
@@ -64,7 +63,7 @@ TEST(VersionTest, VersionParseNeedMorePrefix) {
   }
 }
 
-// TODO malicious version strings, near misses, invalid types
+// TODO(soon): malicious version strings, near misses, invalid types
 TEST(VersionTest, DISABLED_VersionParseBadStrings) {}
 
 TEST(VersionTest, VersionParseMinimal) {
@@ -81,11 +80,11 @@ TEST(VersionTest, VersionParseMinimal) {
   EXPECT_EQ(IX_FW_UNKNOWN, ver.fw_type);
 }
 
-// TODO at least consumer, research + app, boot, test + a few numbers
+// TODO(soon): at least consumer, research + app, boot, test + a few numbers
 TEST(VersionTest, DISABLED_VersionParseFields) {}
 
 TEST(VersionTest, DISABLED_RejectsOtherProtoVersions) {
-  // expect IX_PV_BAD_VER
+  // TODO(soon): expect IX_PV_BAD_VER
 }
 
-} // namespace
+}  // namespace
