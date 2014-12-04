@@ -43,8 +43,8 @@ libgtest_main.a:
 	  $(GTEST_SRC)/src/gtest_main.cc
 
 unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a
-	$(CXX) -o unittests -Wl,-rpath=. $(TESTFLAGS) -L. -lmusecore -lgtest -lgtest_main \
-	  $(TESTOBJS)
+	$(CXX) -o unittests -Wl,-rpath=. $(TESTFLAGS) -L. \
+	  -lmusecore -lgtest -lgtest_main $(TESTOBJS)
 
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
