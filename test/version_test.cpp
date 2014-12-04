@@ -15,8 +15,6 @@ protected:
   ix_muse_version version;
 };
 
-#define EXPECT_ERR_EQ(exp, act) EXPECT_EQ(exp, (act).err)
-
 TEST_F(VersionTest, FindNoneIfNone) {
   EXPECT_EQ(-1, ix_version_find_start("", 0));
   EXPECT_EQ(-1, ix_version_find_start("tsst 1234", strlen("tsst 1234")));
@@ -32,11 +30,16 @@ TEST_F(VersionTest, FindStartOfMinVer) {
 }
 
 TEST_F(VersionTest, VersionParseNeedMorePrefix) {
-  EXPECT_ERR_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE ", 5, &version));
-  EXPECT_ERR_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE A", 6, &version));
-  EXPECT_ERR_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE AP", 7, &version));
-  EXPECT_ERR_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP", 8, &version));
-  EXPECT_ERR_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP ", 9, &version));
+  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE ", 5, &version).err);
+  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE A", 6, &version).err);
+  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE AP", 7, &version).err);
+  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP", 8, &version).err);
+  EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP ", 9, &version).err);
+}
+
+TEST_F(VersionTest, VersionParseMinimal) {
+  auto min_ver = string{MUSE_MINVER};
+  EXPECT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
 }
 
 } // namespace
