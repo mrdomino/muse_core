@@ -44,6 +44,7 @@ TEST_F(VersionTest, DISABLED_VersionParseBadStrings) {}
 TEST_F(VersionTest, VersionParseMinimal) {
   auto min_ver = string{MUSE_MINVER "\n"};
   ASSERT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
+  EXPECT_EQ(IX_IMG_APP, version.img_type);
   EXPECT_EQ(0, version.hw_version.x);
   EXPECT_EQ(0, version.hw_version.y);
   EXPECT_EQ(0, version.fw_version.x);
