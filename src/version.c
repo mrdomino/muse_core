@@ -303,12 +303,27 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
     }                                               \
     else fed += r.end
 
+#   define VP_SPACE()                   \
+    if (len <= (size_t)fed) {           \
+      return _vp_fail(IX_VP_NEED_MORE); \
+    }                                   \
+    else if (buf[fed] != ' ') {         \
+      return _vp_fail(IX_VP_BAD_STR);   \
+    }                                   \
+    else fed += 1
+
     VP_LABEL_DASH(hw, _parse_version_xy, &cfg->hw_version);
+    VP_SPACE();
     VP_LABEL_DASH(fw, _parse_version_xyz, &cfg->fw_version);
+    VP_SPACE();
     VP_LABEL_DASH(bl, _parse_version_xyz, &cfg->bl_version);
+    VP_SPACE();
     VP_LABEL_DASH(fw_build, _parse_uint16_t, &cfg->build_number);
+    VP_SPACE();
     VP_LABEL_DASH(fw_target_hw, _parse_version_xy, &cfg->target_hw_version);
+    VP_SPACE();
     VP_LABEL_DASH(fw_type, _parse_fw_type, &cfg->fw_type);
+    VP_SPACE();
     {
       uint16_t pv;
 
@@ -317,6 +332,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
         return _vp_fail(IX_VP_BAD_VER);
       }
     }
+#   undef VP_SPACE
 #   undef VP_LABEL_DASH
   }
 

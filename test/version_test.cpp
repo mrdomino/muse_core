@@ -35,10 +35,12 @@ TEST_F(VersionTest, VersionParseNeedMorePrefix) {
   EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE AP", 7, &version).err);
   EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP", 8, &version).err);
   EXPECT_EQ(IX_VP_NEED_MORE, ix_version_parse("MUSE APP ", 9, &version).err);
+  EXPECT_EQ(IX_VP_NEED_MORE,
+            ix_version_parse("MUSE APP HW-0", 13, &version).err);
 }
 
 TEST_F(VersionTest, VersionParseMinimal) {
-  auto min_ver = string{MUSE_MINVER};
+  auto min_ver = string{MUSE_MINVER "\n"};
   EXPECT_LE(0, ix_version_parse(min_ver.c_str(), min_ver.size(), &version).end);
 }
 
