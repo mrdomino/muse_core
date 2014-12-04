@@ -11,15 +11,14 @@ extern "C" {
 namespace {
 
 // TODO(someday): move me
-class ParseVersion {
- public:
+namespace version {
   struct Failure : ::std::exception {};
 
   struct NeedMore : Failure {};
   struct BadStr : Failure {};
   struct BadVer : Failure {};
 
-  static ix_muse_version parse(::std::string const& s) {
+  ix_muse_version parse(::std::string const& s) {
     ix_muse_version out;
     auto ret = ix_version_parse(s.c_str(), s.size(), &out);
     if (ret.end >= 0) {
@@ -37,7 +36,7 @@ class ParseVersion {
       throw BadVer();
     }
   }
-};
+}  // namespace version
 
 TEST(VersionTest, FindNoneIfNone) {
   EXPECT_EQ(-1, ix_version_find_start("", 0));
@@ -58,10 +57,10 @@ TEST(VersionTest, VersionParseNeedMorePrefix) {
   auto s = std::string{MUSE_MINVER};
   // MUSE_MINVER ends in a number, so we'd need to see one more char to know we
   // had the whole thing
-  EXPECT_THROW(ParseVersion::parse(s), ParseVersion::NeedMore);
+  EXPECT_THROW(version::parse(s), version::NeedMore);
   while (s.size()) {
     s.pop_back();
-    EXPECT_THROW(ParseVersion::parse(s), ParseVersion::NeedMore);
+    EXPECT_THROW(version::parse(s), version::NeedMore);
   }
 }
 
@@ -69,7 +68,7 @@ TEST(VersionTest, VersionParseNeedMorePrefix) {
 TEST(VersionTest, DISABLED_VersionParseBadStrings) {}
 
 TEST(VersionTest, VersionParseMinimal) {
-  auto ver = ParseVersion::parse(MUSE_MINVER "\n");
+  auto ver = version::parse(MUSE_MINVER "\n");
   EXPECT_EQ(IX_IMG_APP, ver.img_type);
   EXPECT_EQ(0, ver.hw_version.x);
   EXPECT_EQ(0, ver.hw_version.y);
