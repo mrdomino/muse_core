@@ -24,16 +24,21 @@ ifeq ($(OS),OSX)
   SO_EXT=dylib
 endif
 ifeq ($(OS),WIN)
+  COSFLAGS=-DBUILDING_DLL
   SO_EXT=dll
 endif
 
 INCS = -Iinclude -I$(GTEST_SRC)/include
 LIBS =
 TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
-OFLAGS = -O0 -g
-WFLAGS = -Wall -Wextra -Werror
-CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c99 -pedantic
-CXXFLAGS = $(INCS) $(OFLAGS) $(WFLAGS) -std=c++1y
+OFLAGS = -O0 -g -fvisibility=hidden
+#OFLAGS = -O2 -DNDEBUG -fvisibility=hidden
+WFLAGS = -Wall -Wextra -Werror -pedantic
+CSTDFLAGS = -std=c99
+CXXSTDFLAGS = -std=c++1y
+BASE_CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS)
+CFLAGS = $(BASE_CFLAGS) $(COSFLAGS) $(CSTDFLAGS)
+CXXFLAGS = $(BASE_CFLAGS) $(CXXSTDFLAGS)
 TESTFLAGS = $(CXXFLAGS) $(TESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS) $(LIBS)
 LDTESTFLAGS = $(LDFLAGS) $(TESTLIBS)
@@ -45,7 +50,7 @@ TESTOBJS = test/version_test.o
 
 ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
-LIB = libmuse_core.a
+LIB = libmuse_core.$(SO_EXT)
 
 
 all: $(LIB) test
@@ -57,7 +62,7 @@ $(ALLOBJS): include/all.h \
             include/version.h
 
 $(LIB): $(SRCOBJS)
-	ar rcs $(LIB) $(SRCOBJS)
+	$(CC) -shared -o $(LIB) $(SRCOBJS)
 
 libgtest.a:
 	$(CXX) -static -c -o libgtest.a $(TESTFLAGS) -I$(GTEST_SRC) \
@@ -67,7 +72,7 @@ libgtest_main.a:
 	$(CXX) -static -c -o libgtest_main.a $(TESTFLAGS) -I$(GTEST_SRC) \
 	  $(GTEST_SRC)/src/gtest_main.cc
 
-unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a libmuse_core.a
+unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a $(LIB)
 	$(CXXLD) -o unittests $(TESTOBJS) $(LDTESTFLAGS)
 
 clean:

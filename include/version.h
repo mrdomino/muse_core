@@ -70,7 +70,7 @@ typedef struct {
  * Returns the start of the string if found, or -1 if none.
  */
 ssize_t
-ix_version_find_start(const char* buf, size_t len);
+ix_version_find_start(const char* buf, size_t len) SO_EXPORT;
 
 /*
  * Parses a muse version string.
@@ -78,10 +78,10 @@ ix_version_find_start(const char* buf, size_t len);
  * If this returns negative, the contents of cfg are undefined.
  */
 ix_vp_ret
-ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg);
+ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg) SO_EXPORT;
 
 /*
  * Prints a text representation of cfg to fp.
  */
 void
-ix_version_print(FILE* fp, const ix_muse_version* cfg);
+ix_version_print(FILE* fp, const ix_muse_version* cfg) SO_EXPORT;
