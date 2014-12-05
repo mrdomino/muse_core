@@ -24,20 +24,22 @@ ifeq ($(OS),OSX)
   SO_EXT=dylib
 endif
 ifeq ($(OS),WIN)
-  COSFLAGS=-DBUILDING_DLL
+  EXPORT_COSFLAGS=-DBUILDING_DLL
   SO_EXT=dll
 endif
 
 INCS = -Iinclude -I$(GTEST_SRC)/include
 LIBS =
 TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
-OFLAGS = -O0 -g -fvisibility=hidden
-#OFLAGS = -O2 -DNDEBUG -fvisibility=hidden
+EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden -fPIC
+OFLAGS = -O0 -g
+#OFLAGS = -O2 -DNDEBUG
 WFLAGS = -Wall -Wextra -Werror -pedantic
 CSTDFLAGS = -std=c99
 CXXSTDFLAGS = -std=c++1y
 BASE_CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS)
-CFLAGS = $(BASE_CFLAGS) $(COSFLAGS) $(CSTDFLAGS)
+# XXX Sticking EXPORT_CFLAGS here is a hack
+CFLAGS = $(BASE_CFLAGS) $(EXPORT_CFLAGS) $(COSFLAGS) $(CSTDFLAGS)
 CXXFLAGS = $(BASE_CFLAGS) $(CXXSTDFLAGS)
 TESTFLAGS = $(CXXFLAGS) $(TESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS) $(LIBS)
