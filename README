@@ -1,0 +1,5 @@
+Muse Core
+---------
+
+This is a pure C implementations of such core Muse client algorithms as packet
+deserialization and connection state handling.
