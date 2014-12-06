@@ -40,6 +40,8 @@ ix_version_find_start(const char* buf, size_t len)
   return -1;
 }
 
+/* TODO(soon): convert parsing logic to hammer */
+
 static ix_vp_ret
 _vp_fail(enum _ix_vp_err code)
 {
