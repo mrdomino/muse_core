@@ -9,5 +9,6 @@
 #include <string.h>
 
 #include "defs.h"
+#include "except.h"
 #include "util.h"
 #include "version.h"

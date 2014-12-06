@@ -94,7 +94,7 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
 
   while (len-- > 0) {
     switch (state) {
-    default: assert(0);
+    default: ix_notreached();
     case _PU_START:
       if (!isdigit(*buf)) {
         state = _PU_ERR;
@@ -137,7 +137,7 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
   }
 
   switch (state) {
-  default: assert(0);
+  default: ix_notreached();
   case _PU_START:
   case _PU_SAW_DIGIT:
     errno = EAGAIN;

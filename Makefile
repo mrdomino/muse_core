@@ -47,7 +47,8 @@ TESTFLAGS = $(CXXFLAGS) $(TESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS) $(LIBS)
 LDTESTFLAGS = $(LDFLAGS) $(TESTLIBS)
 
-SRCOBJS = src/util.o \
+SRCOBJS = src/except.o \
+          src/util.o \
           src/version.o
 
 TESTOBJS = test/version_test.o
