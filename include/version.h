@@ -59,7 +59,7 @@ enum _ix_vp_err {
  * described by err.
  */
 typedef struct {
-  int64_t          end;
+  int32_t          end;
   enum _ix_vp_err  err;
 } ix_vp_ret;
 
@@ -69,7 +69,7 @@ typedef struct {
  *
  * Returns the start of the string if found, or -1 if none.
  */
-int64_t
+int32_t
 ix_version_find_start(const char* buf, size_t len) SO_EXPORT;
 
 /*

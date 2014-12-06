@@ -20,10 +20,10 @@ static const char esearch[] = { 'e', 's', 'e', 'a', 'r', 'c', 'h' };
 static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
 
-int64_t
+int32_t
 ix_version_find_start(const char* buf, size_t len)
 {
-  int64_t i;
+  int32_t i;
 
   for (i = 0; i + sizeof muse_spc < len; ++i) {
     if (memcmp(buf + i, muse_spc, sizeof muse_spc) == 0) {
@@ -31,7 +31,7 @@ ix_version_find_start(const char* buf, size_t len)
     }
   }
 
-  for (i = 1; i < (int64_t)sizeof muse_spc; ++i) {
+  for (i = 1; i < (int32_t)sizeof muse_spc; ++i) {
     if (memcmp(buf + len - i, muse_spc, i) == 0) {
       return i;
     }
@@ -87,7 +87,7 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
     _PU_SAW_NONDIGIT
   }        state = _PU_START;
   uint16_t acc = 0;
-  int64_t  red = 0;
+  int32_t  red = 0;
   uint8_t  digit;
 
   while (len-- > 0) {
@@ -171,9 +171,9 @@ static ix_vp_ret
 _parse_version_xy(const char* buf, size_t len, void* p)
 {
   ix_version_xy* ver = (ix_version_xy*)p;
-  int64_t        fed = 0, sen = (int64_t)len;
+  int32_t        fed = 0, sen = (int32_t)len;
 
-  assert(len < INT64_MAX);
+  assert(len < INT32_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
   PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->y);
@@ -185,9 +185,9 @@ static ix_vp_ret
 _parse_version_xyz(const char* buf, size_t len, void* p)
 {
   ix_version_xyz* ver = (ix_version_xyz*)p;
-  int64_t fed = 0, sen = (int64_t)len;
+  int32_t fed = 0, sen = (int32_t)len;
 
-  assert(len < INT64_MAX);
+  assert(len < INT32_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
   PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->y);
@@ -201,9 +201,9 @@ static ix_vp_ret
 _parse_uint16_t(const char* buf, size_t len, void* p)
 {
   uint16_t* x = (uint16_t*)p;
-  int64_t   fed = 0, sen = (int64_t)len;
+  int32_t   fed = 0, sen = (int32_t)len;
 
-  assert(len < INT64_MAX);
+  assert(len < INT32_MAX);
   PARSE_UINT16(fed, sen, buf, x);
   return (ix_vp_ret){ .end = fed };
 }
@@ -212,9 +212,9 @@ static ix_vp_ret
 _parse_fw_type(const char* buf, size_t len, void* p)
 {
   ix_fw_type* fwt = (ix_fw_type*)p;
-  int64_t fed = 0, sen = (int64_t)len;
+  int32_t fed = 0, sen = (int32_t)len;
 
-  assert(len < INT64_MAX);
+  assert(len < INT32_MAX);
 
   if (len == 0) {
     return _vp_fail(IX_VP_NEED_MORE);
@@ -262,7 +262,7 @@ _parse_label_dash(const char* buf, size_t len,
                   ix_vp_ret (*parse_fn)(const char*, size_t, void*),
                   void* p)
 {
-  int64_t   fed = 0;
+  int32_t   fed = 0;
   ix_vp_ret r;
 
   if (len < label_len + 1) {
@@ -286,12 +286,12 @@ _parse_label_dash(const char* buf, size_t len,
 ix_vp_ret
 ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 {
-  int64_t fed = 0, sen;
+  int32_t fed = 0, sen;
 
-  if (len >= INT64_MAX) {
+  if (len >= INT32_MAX) {
     return _vp_fail(IX_VP_FAIL);
   }
-  else sen = (int64_t)len;
+  else sen = (int32_t)len;
 
   {
       size_t pre = sizeof muse_spc > len ? len : sizeof muse_spc;
