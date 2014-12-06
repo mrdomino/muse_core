@@ -1,3 +1,5 @@
+default: all test stats
+
 UNAME=$(shell uname)
 ifeq ($(UNAME),Darwin)
   OS=OSX
@@ -55,10 +57,14 @@ ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 LIB = libmuse_core.$(SO_EXT)
 
 
-all: $(LIB) test
+all: $(LIB)
 
 test: unittests
 	./unittests
+
+stats: $(LIB)
+	@echo -n "$(LIB): "
+	@stat --format=%s $(LIB)
 
 $(ALLOBJS): include/all.h \
             include/version.h
@@ -83,4 +89,4 @@ clean:
 distclean: clean
 	rm -f libgtest.a libgtest_main.a
 
-.PHONY: all clean distclean test
+.PHONY: all clean default distclean test stats
