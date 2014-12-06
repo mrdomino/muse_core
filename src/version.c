@@ -54,19 +54,15 @@ _vp_fail(enum _ix_vp_err code)
 /*
  * Parse a base-10 number into a uint16_t.
  *
- * Returns first character after the number, or -1 if there was an
- * error. In the case of an error, errno is used to communicate the
- * condition.
- *
  * Possible errors:
- *    - EAGAIN    The buffer ended with a digit, so we might not have
- *                the whole number.
+ *    - IX_VP_NEED_MORE  The buffer ended with a digit, so we might not have
+ *                       the whole number.
  *
- *    - EBADMSG   The buffer didn't start with a digit.
+ *    - IX_VP_BAD_STR    The buffer didn't start with a digit.
  *
- *    - EOVERFLOW The number would overflow a uint16.
+ *    - IX_VP_FAIL       The number would overflow a uint16.
  */
-static int64_t
+static ix_vp_ret
 _parse_uint16(const char* buf, size_t len, uint16_t* out)
 {
   /*
@@ -142,29 +138,26 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
   default: ix_notreached();
   case _PU_START:
   case _PU_SAW_DIGIT:
-    errno = EAGAIN;
-    return -1;
+    return _vp_fail(IX_VP_NEED_MORE);
   case _PU_ERR:
-    errno = EBADMSG;
-    return -1;
+    return _vp_fail(IX_VP_BAD_STR);
   case _PU_OVER:
-    errno = EOVERFLOW;
-    return -1;
+    return _vp_fail(IX_VP_FAIL);
   case _PU_SAW_NONDIGIT:
     *out = acc;
-    return red;
+    return (ix_vp_ret){ .end = red };
   }
 }
 
 #define PARSE_UINT16(fed, len, buf, addr) do {              \
-  int64_t ret = _parse_uint16(buf + fed, len - fed, addr);  \
-  if (fed + ret == len || (ret == -1 && errno == EAGAIN)) { \
+  ix_vp_ret r = _parse_uint16(buf + fed, len - fed, addr);  \
+  if (r.end == IX_VP_NEED_MORE) {                           \
     return _vp_fail(IX_VP_NEED_MORE);                       \
   }                                                         \
-  if (ret == -1) {                                          \
-    return _vp_fail(IX_VP_FAIL);                            \
+  if (r.end < 0) {                                          \
+    return r;                                               \
   }                                                         \
-  fed += ret;                                               \
+  fed += r.end;                                             \
 } while (0)
 
 #define PARSE_CH(fed, len, buf, ch) do {  \
