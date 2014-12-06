@@ -3,4 +3,5 @@
 	url = https://chromium.googlesource.com/external/googletest.git
 [submodule "3rdparty/hammer"]
 	path = 3rdparty/hammer
-	url = https://github.com/UpstandingHackers/hammer
+# TODO(soon) switch back to UpstandingHackers
+	url = https://github.com/mrdomino/hammer
