@@ -18,11 +18,13 @@ CXXLD = $(CXX)
 GTEST_SRC = 3rdparty/gtest
 
 ifeq ($(OS),LINUX)
+  EXPORT_COSFLAGS=-fPIC
   CXXTESTOSFLAGS=-pthread
   LDTESTOSFLAGS=-pthread -Wl,-rpath=.,--enable-new-dtags
   SO_EXT=so
 endif
 ifeq ($(OS),OSX)
+  EXPORT_COSFLAGS=-fPIC
   SO_EXT=dylib
 endif
 ifeq ($(OS),WIN)
@@ -33,7 +35,7 @@ endif
 INCS = -Iinclude -I$(GTEST_SRC)/include
 LIBS =
 TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
-EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden -fPIC
+EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden
 OFLAGS = -O0 -g
 #OFLAGS = -O2 -DNDEBUG
 WFLAGS = -Wall -Wextra -Werror -pedantic
