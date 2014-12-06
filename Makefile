@@ -66,8 +66,7 @@ test: unittests
 	./unittests
 
 stats: $(LIB)
-	@echo -n "$(LIB): "
-	@stat --format=%s $(LIB)
+	size $(LIB)
 
 $(ALLOBJS): include/all.h \
             include/version.h
