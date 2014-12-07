@@ -5,7 +5,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include "defs.h"
 
@@ -88,11 +87,5 @@ ix_version_find_start(const char* buf, size_t len) SO_EXPORT;
  */
 ix_vp_ret
 ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg) SO_EXPORT;
-
-/*
- * Prints a text representation of cfg to fp.
- */
-void
-ix_version_print(FILE* fp, const ix_muse_version* cfg) SO_EXPORT;
 
 #endif  /* IX_VERSION_H_ */

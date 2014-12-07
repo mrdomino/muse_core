@@ -370,10 +370,3 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
 
   return (ix_vp_ret){ .end = fed };
 }
-
-void
-ix_version_print(FILE* fp, const ix_muse_version* cfg)
-{
-  (void)cfg;
-  fprintf(fp, "tsst\n");
-}
