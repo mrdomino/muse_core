@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <string.h>
 #include "defs.h"
-#include "except.h"
 #include "version.h"
 
 

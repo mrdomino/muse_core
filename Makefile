@@ -62,7 +62,6 @@ LDFLAGS = $(LDOSFLAGS) $(OFLAGS)
 LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefined
 
 SRCOBJS = src/connect.o \
-          src/except.o \
           src/packet.o \
           src/util.o \
           src/r.o \
@@ -87,7 +86,6 @@ stats: $(LIB)
 	size $(LIB)
 
 $(ALLOBJS): include/defs.h \
-            include/except.h \
             include/packet.h \
             include/util.h \
             include/version.h \
