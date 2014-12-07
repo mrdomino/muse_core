@@ -81,8 +81,7 @@ test: unittests
 stats: $(LIB)
 	size $(LIB)
 
-$(ALLOBJS): include/all.h \
-            include/defs.h \
+$(ALLOBJS): include/defs.h \
             include/except.h \
             include/util.h \
             include/version.h \

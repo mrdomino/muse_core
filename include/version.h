@@ -1,5 +1,14 @@
 /* Copyright 2014 Interaxon, Inc. */
 
+#ifndef IX_VERSION_H_
+#define IX_VERSION_H_
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include "defs.h"
+
 /*
  * Smallest possible valid muse version string.
  */
@@ -85,3 +94,5 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg) SO_EXPORT;
  */
 void
 ix_version_print(FILE* fp, const ix_muse_version* cfg) SO_EXPORT;
+
+#endif  /* IX_VERSION_H_ */

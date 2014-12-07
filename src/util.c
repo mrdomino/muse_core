@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include "util.h"
 
 size_t

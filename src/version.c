@@ -1,6 +1,12 @@
 /* Copyright 2014 Interaxon, Inc. */
 
-#include "all.h"
+#include "version.h"
+
+#include <assert.h>
+#include <ctype.h>
+#include <string.h>
+
+#include "except.h"
 
 
 static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
