@@ -32,8 +32,8 @@ ifeq ($(OS),WIN)
   SO_EXT=dll
 endif
 
-INCS = -Iinclude -I$(GTEST_SRC)/include
-LIBS =
+INCS = -Ibuild/include -Iinclude -I$(GTEST_SRC)/include
+LIBS = build/lib/libhammer.a
 TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
 EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden
 OFLAGS = -O0 -g
@@ -46,8 +46,8 @@ BASE_CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS)
 CFLAGS = $(BASE_CFLAGS) $(EXPORT_CFLAGS) $(COSFLAGS) $(CSTDFLAGS)
 CXXFLAGS = $(BASE_CFLAGS) $(CXXSTDFLAGS)
 CXXTESTFLAGS = $(CXXFLAGS) $(CXXTESTOSFLAGS)
-LDFLAGS = $(LDOSFLAGS) $(OFLAGS) $(LIBS)
-LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) $(TESTLIBS)
+LDFLAGS = $(LDOSFLAGS) $(OFLAGS)
+LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS)
 
 SRCOBJS = src/except.o \
           src/util.o \
@@ -71,10 +71,11 @@ stats: $(LIB)
 	size $(LIB)
 
 $(ALLOBJS): include/all.h \
-            include/version.h
+            include/version.h \
+            hammer
 
-$(LIB): $(SRCOBJS)
-	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS)
+$(LIB): $(SRCOBJS) hammer
+	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS) $(LIBS)
 
 libgtest.a:
 	$(CXX) -static -c -o libgtest.a $(CXXTESTFLAGS) -I$(GTEST_SRC) \
@@ -85,7 +86,11 @@ libgtest_main.a:
 	  $(GTEST_SRC)/src/gtest_main.cc
 
 unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a $(LIB)
-	$(CXXLD) -o unittests $(TESTOBJS) $(LDTESTFLAGS)
+	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(TESTLIBS)
+
+hammer:
+	scons -C 3rdparty/hammer
+	scons -C 3rdparty/hammer install prefix=../../build
 
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
@@ -93,4 +98,4 @@ clean:
 distclean: clean
 	rm -f libgtest.a libgtest_main.a
 
-.PHONY: all build clean default distclean test stats
+.PHONY: all build clean default distclean hammer test stats
