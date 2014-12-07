@@ -156,22 +156,34 @@ _parse_uint16(const char* buf, size_t len, void* p)
   }
 }
 
+static ix_vp_ret
+_parse_ch(const char* buf, size_t len, char c)
+{
+  if (len == 0) {
+    return _vp_fail(IX_VP_NEED_MORE);
+  }
+  if (*buf != c) {
+    return _vp_fail(IX_VP_BAD_STR);
+  }
+  return (ix_vp_ret){ .end = 1 };
+}
+
 #define PARSE_UINT16(fed, len, buf, addr) do {              \
+  assert(len >= fed);                                       \
   ix_vp_ret r = _parse_uint16(buf + fed, len - fed, addr);  \
-  if (r.end == IX_VP_NEED_MORE) {                           \
-    return _vp_fail(IX_VP_NEED_MORE);                       \
-  }                                                         \
   if (r.end < 0) {                                          \
     return r;                                               \
   }                                                         \
   fed += r.end;                                             \
 } while (0)
 
-#define PARSE_CH(fed, len, buf, ch) do {  \
-  if (buf[fed] != (ch)) {                 \
-    return _vp_fail(IX_VP_BAD_STR);       \
-  }                                       \
-  fed++;                                  \
+#define PARSE_CH(fed, len, buf, ch) do {              \
+  assert(len >= fed);                                 \
+  ix_vp_ret r = _parse_ch(buf + fed, len - fed, ch);  \
+  if (r.end < 0) {                                    \
+    return r;                                         \
+  }                                                   \
+  fed += r.end;                                       \
 } while(0)
 
 static ix_vp_ret
