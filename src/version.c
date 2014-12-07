@@ -2,6 +2,8 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <hammer/glue.h>
+#include <hammer/hammer.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -25,6 +27,47 @@ static const char onsumer[] = { 'o', 'n', 's', 'u', 'm', 'e', 'r' };
 static const char esearch[] = { 'e', 's', 'e', 'a', 'r', 'c', 'h' };
 static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
+static HParsedToken*
+act_img(const HParseResult* p, void* user_data)
+{
+  (void)p;
+  (void)user_data;
+  return NULL;
+}
+
+static HParsedToken*
+act_version(const HParseResult* p, void* user_data)
+{
+  (void)p;
+  (void)user_data;
+  return NULL;
+}
+
+static HParser*
+_vp_version_parser()
+{
+  static HParser* parser;
+  static int inited;
+
+  if (!inited) {
+    H_RULE(muse, h_token((uint8_t*)"MUSE", 4));
+
+    H_ARULE(img, h_choice(h_token((uint8_t*)"APP", 3),
+                          h_token((uint8_t*)"BOOT", 4),
+                          h_token((uint8_t*)"TEST", 4),
+                          NULL));
+
+    H_RULE(spc, h_ignore(h_ch(' ')));
+    H_RULE(end, h_choice(h_ch('\n'), h_ch('\r'), NULL));
+
+    H_ARULE(version, h_sequence(muse, spc, img, end, NULL));
+
+    parser = version;
+    inited = 1;
+  }
+
+  return parser;
+}
 
 int32_t
 ix_version_find_start(const char* buf, size_t len)
@@ -370,6 +413,9 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
     }
 #   undef VP_LABEL_DASH
   }
+
+  HParser* p = _vp_version_parser();
+  (void)p;
 
   return (ix_vp_ret){ .end = fed };
 }

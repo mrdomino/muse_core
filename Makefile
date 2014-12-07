@@ -48,7 +48,7 @@ EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden
 OFLAGS = -O0 -g
 #OFLAGS = -O2 -DNDEBUG
 WFLAGS = -Wall -Wextra -Werror -pedantic
-CSTDFLAGS = -std=c99
+CSTDFLAGS = -std=c11
 CXXSTDFLAGS = -std=c++1y
 BASE_CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS)
 #
