@@ -91,10 +91,12 @@ $(LIB): $(SRCOBJS) $(HAMMER_LIB)
 	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS) $(LIBS)
 
 $(GTEST_LIB):
+	mkdir -p $$(dirname $(GTEST_LIB))
 	$(CXX) -static -c -o $(GTEST_LIB) $(CXXTESTFLAGS) -I$(GTEST_SRC) \
 	  -Wno-missing-field-initializers $(GTEST_SRC)/src/gtest-all.cc
 
 $(GTEST_MAIN_LIB):
+	mkdir -p $$(dirname $(GTEST_MAIN_LIB))
 	$(CXX) -static -c -o $(GTEST_MAIN_LIB) $(CXXTESTFLAGS) -I$(GTEST_SRC) \
 	  $(GTEST_SRC)/src/gtest_main.cc
 
