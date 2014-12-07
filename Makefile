@@ -11,6 +11,24 @@ else
   $(error unknown os)
 endif
 
+ifeq ($(OS),LINUX)
+  EXPORT_COSFLAGS=-fPIC
+  CXXTESTOSFLAGS=-pthread
+  LDTESTOSFLAGS=-pthread -Wl,-rpath=.,--enable-new-dtags
+  SO_EXT=so
+  LIB_EXT=a
+endif
+ifeq ($(OS),OSX)
+  EXPORT_COSFLAGS=-fPIC
+  SO_EXT=dylib
+  LIB_EXT=a
+endif
+ifeq ($(OS),WIN)
+  EXPORT_COSFLAGS=-DBUILDING_DLL
+  SO_EXT=dll
+  LIB_EXT=lib
+endif
+
 CC = gcc
 LD = $(CC)
 CXX = g++
@@ -18,24 +36,10 @@ CXXLD = $(CXX)
 GTEST_SRC = 3rdparty/gtest
 HAMMER_SRC = 3rdparty/hammer
 BUILD_DIR = $(PWD)/build
-HAMMER_LIB = $(BUILD_DIR)/lib/libhammer.a
-GTEST_LIB = $(BUILD_DIR)/lib/libgtest.a
-GTEST_MAIN_LIB = $(BUILD_DIR)/lib/libgtest_main.a
 
-ifeq ($(OS),LINUX)
-  EXPORT_COSFLAGS=-fPIC
-  CXXTESTOSFLAGS=-pthread
-  LDTESTOSFLAGS=-pthread -Wl,-rpath=.,--enable-new-dtags
-  SO_EXT=so
-endif
-ifeq ($(OS),OSX)
-  EXPORT_COSFLAGS=-fPIC
-  SO_EXT=dylib
-endif
-ifeq ($(OS),WIN)
-  EXPORT_COSFLAGS=-DBUILDING_DLL
-  SO_EXT=dll
-endif
+HAMMER_LIB = $(BUILD_DIR)/lib/libhammer.$(LIB_EXT)
+GTEST_LIB = $(BUILD_DIR)/lib/libgtest.$(LIB_EXT)
+GTEST_MAIN_LIB = $(BUILD_DIR)/lib/libgtest_main.$(LIB_EXT)
 
 INCS = -Iinclude -I$(BUILD_DIR)/include -I$(GTEST_SRC)/include
 LIBS = $(HAMMER_LIB)
