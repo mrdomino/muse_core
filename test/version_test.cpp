@@ -55,9 +55,9 @@ TEST(VersionTest, FindStartOfMinVer) {
   EXPECT_EQ(static_cast<std::ptrdiff_t>(garbage.size()),
             version::findStart(gmv));
   EXPECT_EQ(2, version::findStart("  MU"));
-  auto buf = std::string(50, '\0');
+  auto buf = std::string(1, '\0');
   buf.append(min_ver);
-  EXPECT_EQ(50, version::findStart(buf));
+  EXPECT_EQ(1, version::findStart(buf));
 }
 
 TEST(VersionTest, ParseNeedMorePrefix) {
