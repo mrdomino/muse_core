@@ -51,12 +51,14 @@ WFLAGS = -Wall -Wextra -Werror -pedantic
 CSTDFLAGS = -std=c99
 CXXSTDFLAGS = -std=c++1y
 BASE_CFLAGS = $(INCS) $(OFLAGS) $(WFLAGS)
+#
 # XXX Sticking EXPORT_CFLAGS here is a hack
+#
 CFLAGS = $(BASE_CFLAGS) $(EXPORT_CFLAGS) $(COSFLAGS) $(CSTDFLAGS)
 CXXFLAGS = $(BASE_CFLAGS) $(CXXSTDFLAGS)
 CXXTESTFLAGS = $(CXXFLAGS) $(CXXTESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS)
-LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS)
+LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefined
 
 SRCOBJS = src/except.o \
           src/util.o \
