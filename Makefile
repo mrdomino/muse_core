@@ -16,6 +16,11 @@ LD = $(CC)
 CXX = g++
 CXXLD = $(CXX)
 GTEST_SRC = 3rdparty/gtest
+HAMMER_SRC = 3rdparty/hammer
+BUILD_DIR = $(PWD)/build
+HAMMER_LIB = $(BUILD_DIR)/lib/libhammer.a
+GTEST_LIB = $(BUILD_DIR)/lib/libgtest.a
+GTEST_MAIN_LIB = $(BUILD_DIR)/lib/libgtest_main.a
 
 ifeq ($(OS),LINUX)
   EXPORT_COSFLAGS=-fPIC
@@ -32,9 +37,9 @@ ifeq ($(OS),WIN)
   SO_EXT=dll
 endif
 
-INCS = -Ibuild/include -Iinclude -I$(GTEST_SRC)/include
-LIBS = build/lib/libhammer.a
-TESTLIBS = -L. -lgtest -lgtest_main -lmuse_core
+INCS = -Iinclude -I$(BUILD_DIR)/include -I$(GTEST_SRC)/include
+LIBS = $(HAMMER_LIB)
+TESTLIBS = $(GTEST_LIB) $(GTEST_MAIN_LIB) -L. -lmuse_core
 EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden
 OFLAGS = -O0 -g
 #OFLAGS = -O2 -DNDEBUG
@@ -80,25 +85,25 @@ $(ALLOBJS): include/all.h \
 $(LIB): $(SRCOBJS) hammer
 	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS) $(LIBS)
 
-libgtest.a:
-	$(CXX) -static -c -o libgtest.a $(CXXTESTFLAGS) -I$(GTEST_SRC) \
+$(GTEST_LIB):
+	$(CXX) -static -c -o $(GTEST_LIB) $(CXXTESTFLAGS) -I$(GTEST_SRC) \
 	  -Wno-missing-field-initializers $(GTEST_SRC)/src/gtest-all.cc
 
-libgtest_main.a:
-	$(CXX) -static -c -o libgtest_main.a $(CXXTESTFLAGS) -I$(GTEST_SRC) \
+$(GTEST_MAIN_LIB):
+	$(CXX) -static -c -o $(GTEST_MAIN_LIB) $(CXXTESTFLAGS) -I$(GTEST_SRC) \
 	  $(GTEST_SRC)/src/gtest_main.cc
 
-unittests: $(LIB) $(TESTOBJS) libgtest.a libgtest_main.a $(LIB)
+unittests: $(LIB) $(TESTOBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
 	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(TESTLIBS)
 
 hammer:
-	scons -C 3rdparty/hammer
-	scons -C 3rdparty/hammer install prefix=../../build
+	scons -C $(HAMMER_SRC)
+	scons -C $(HAMMER_SRC) install prefix=$(BUILD_DIR)
 
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
 
 distclean: clean
-	rm -f libgtest.a libgtest_main.a
+	rm -rf $(BUILD_DIR)
 
 .PHONY: all build clean default distclean hammer test stats
