@@ -74,7 +74,7 @@ $(ALLOBJS): include/all.h \
             include/version.h
 
 $(LIB): $(SRCOBJS)
-	$(LD) -shared -o $(LIB) $(LDFLAGS) $(SRCOBJS)
+	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS)
 
 libgtest.a:
 	$(CXX) -static -c -o libgtest.a $(CXXTESTFLAGS) -I$(GTEST_SRC) \
