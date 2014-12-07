@@ -1,6 +1,10 @@
 // Copyright 2014 Interaxon, Inc.
 
+#include <cstddef>
+#include <cstdint>
+
 extern "C" {
+#include "defs.h"
 #include "version.h"
 }
 
