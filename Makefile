@@ -86,9 +86,9 @@ $(ALLOBJS): include/all.h \
             include/except.h \
             include/util.h \
             include/version.h \
-            hammer
+            build/include/hammer/hammer.h
 
-$(LIB): $(SRCOBJS) hammer
+$(LIB): $(SRCOBJS) $(HAMMER_LIB)
 	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS) $(LIBS)
 
 $(GTEST_LIB):
@@ -102,7 +102,7 @@ $(GTEST_MAIN_LIB):
 unittests: $(LIB) $(TESTOBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
 	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(TESTLIBS)
 
-hammer:
+$(HAMMER_LIB) build/include/hammer/hammer.h:
 	scons -C $(HAMMER_SRC)
 	scons -C $(HAMMER_SRC) install prefix=$(BUILD_DIR)
 
@@ -112,4 +112,4 @@ clean:
 distclean: clean
 	rm -rf $(BUILD_DIR)
 
-.PHONY: all build clean default distclean hammer test stats
+.PHONY: all build clean default distclean test stats
