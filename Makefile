@@ -102,8 +102,8 @@ unittests: $(LIB) $(TESTOBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
 	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(TESTLIBS)
 
 $(HAMMER_LIB) build/include/hammer/hammer.h:
-	scons -C $(HAMMER_SRC)
-	scons -C $(HAMMER_SRC) install prefix=$(BUILD_DIR)
+	env CC=$(CC) scons -C $(HAMMER_SRC)
+	env CC=$(CC) scons -C $(HAMMER_SRC) install prefix=$(BUILD_DIR)
 
 clean:
 	rm -f $(ALLOBJS) $(LIB) unittests
