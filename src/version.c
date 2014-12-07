@@ -69,7 +69,7 @@ _vp_fail(enum _ix_vp_err code)
  *    - IX_VP_FAIL       The number would overflow a uint16.
  */
 static ix_vp_ret
-_parse_uint16(const char* buf, size_t len, uint16_t* out)
+_parse_uint16(const char* buf, size_t len, void* p)
 {
   /*
    * State machine states. START and SAW DIGIT lead to EAGAIN. ERR leads
@@ -92,9 +92,10 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
     _PU_SAW_DIGIT,
     _PU_SAW_NONDIGIT
   }        state = _PU_START;
-  uint16_t acc = 0;
-  int32_t  red = 0;
-  uint8_t  digit;
+  uint16_t* out = (uint16_t*)p;
+  uint16_t  acc = 0;
+  int32_t   red = 0;
+  uint8_t   digit;
 
   while (len-- > 0) {
     switch (state) {
@@ -176,13 +177,14 @@ _parse_uint16(const char* buf, size_t len, uint16_t* out)
 static ix_vp_ret
 _parse_version_xy(const char* buf, size_t len, void* p)
 {
-  ix_version_xy* ver = (ix_version_xy*)p;
-  int32_t        fed = 0, sen = (int32_t)len;
+  ix_version_xyz* ver = (ix_version_xyz*)p;
+  int32_t         fed = 0, sen = (int32_t)len;
 
   assert(len < INT32_MAX);
   PARSE_UINT16(fed, sen, buf, &ver->x);
   PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->y);
+  ver->z = 0;
 
   return (ix_vp_ret){ .end = fed };
 }
@@ -200,17 +202,6 @@ _parse_version_xyz(const char* buf, size_t len, void* p)
   PARSE_CH(fed, sen, buf, '.');
   PARSE_UINT16(fed, sen, buf, &ver->z);
 
-  return (ix_vp_ret){ .end = fed };
-}
-
-static ix_vp_ret
-_parse_uint16_t(const char* buf, size_t len, void* p)
-{
-  uint16_t* x = (uint16_t*)p;
-  int32_t   fed = 0, sen = (int32_t)len;
-
-  assert(len < INT32_MAX);
-  PARSE_UINT16(fed, sen, buf, x);
   return (ix_vp_ret){ .end = fed };
 }
 
@@ -351,7 +342,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
     PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(bl, _parse_version_xyz, &cfg->bl_version);
     PARSE_CH(fed, sen, buf, ' ');
-    VP_LABEL_DASH(fw_build, _parse_uint16_t, &cfg->build_number);
+    VP_LABEL_DASH(fw_build, _parse_uint16, &cfg->build_number);
     PARSE_CH(fed, sen, buf, ' ');
     VP_LABEL_DASH(fw_target_hw, _parse_version_xy, &cfg->target_hw_version);
     PARSE_CH(fed, sen, buf, ' ');
@@ -360,7 +351,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg)
     {
       uint16_t pv;
 
-      VP_LABEL_DASH(proto, _parse_uint16_t, &pv);
+      VP_LABEL_DASH(proto, _parse_uint16, &pv);
       if (pv != 2) {
         return _vp_fail(IX_VP_BAD_VER);
       }

@@ -31,11 +31,6 @@ typedef enum {
 typedef struct {
   uint16_t x;
   uint16_t y;
-} ix_version_xy;
-
-typedef struct {
-  uint16_t x;
-  uint16_t y;
   uint16_t z;
 } ix_version_xyz;
 
@@ -44,11 +39,11 @@ typedef struct {
  */
 typedef struct {
   ix_img_type     img_type;
-  ix_version_xy   hw_version;
+  ix_version_xyz  hw_version;
   ix_version_xyz  fw_version;
   ix_version_xyz  bl_version;
   uint16_t        build_number;
-  ix_version_xy   target_hw_version;
+  ix_version_xyz  target_hw_version;
   ix_fw_type      fw_type;
 } ix_muse_version;
 
