@@ -42,8 +42,9 @@ GTEST_LIB = $(BUILD_DIR)/lib/libgtest.$(LIB_EXT)
 GTEST_MAIN_LIB = $(BUILD_DIR)/lib/libgtest_main.$(LIB_EXT)
 
 INCS = -Iinclude -I$(BUILD_DIR)/include -I$(GTEST_SRC)/include
-LIBS = $(HAMMER_LIB)
-TESTLIBS = $(GTEST_LIB) $(GTEST_MAIN_LIB) -L. -lmuse_core
+# libs that should be linked against to get muse_core
+LIBS = -L. -lmuse_core $(HAMMER_LIB)
+TESTLIBS = $(GTEST_LIB) $(GTEST_MAIN_LIB)
 EXPORT_CFLAGS = $(EXPORT_COSFLAGS) -fvisibility=hidden
 OFLAGS = -O0 -g
 #OFLAGS = -O2 -DNDEBUG
@@ -87,8 +88,8 @@ $(ALLOBJS): include/defs.h \
             include/version.h \
             build/include/hammer/hammer.h
 
-$(LIB): $(SRCOBJS) $(HAMMER_LIB)
-	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS) $(LIBS)
+$(LIB): $(SRCOBJS)
+	$(LD) -shared -o $(LIB) $(CFLAGS) $(LDFLAGS) $(SRCOBJS)
 
 $(GTEST_LIB):
 	mkdir -p $$(dirname $(GTEST_LIB))
@@ -101,7 +102,7 @@ $(GTEST_MAIN_LIB):
 	  $(GTEST_SRC)/src/gtest_main.cc
 
 unittests: $(LIB) $(TESTOBJS) $(GTEST_LIB) $(GTEST_MAIN_LIB)
-	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(TESTLIBS)
+	$(CXXLD) -o unittests $(LDTESTFLAGS) $(TESTOBJS) $(LIBS) $(TESTLIBS)
 
 $(HAMMER_LIB) build/include/hammer/hammer.h:
 	env CC=$(CC) scons -C $(HAMMER_SRC)
