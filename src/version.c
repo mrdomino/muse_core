@@ -29,9 +29,33 @@ static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
 
 static HParser *parser;
+/* TODO(soon): figure out how to make this not global. */
 static ix_muse_version parsed_version;
 
 
+int32_t
+ix_version_find_start(const char* buf, size_t len)
+{
+  int32_t i;
+
+  for (i = 0; i + sizeof muse_spc < len; ++i) {
+    if (memcmp(buf + i, muse_spc, sizeof muse_spc) == 0) {
+      return i;
+    }
+  }
+
+  for (i = 1; i < (int32_t)sizeof muse_spc; ++i) {
+    if (memcmp(buf + len - i, muse_spc, i) == 0) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+/*
+ * Action to take on parsing an ix_img_type token.
+ */
 static HParsedToken*
 act_img(const HParseResult* p, void* user_data)
 {
@@ -54,14 +78,9 @@ act_img(const HParseResult* p, void* user_data)
   return NULL;
 }
 
-static HParsedToken*
-act_version(const HParseResult* p, void* user_data)
-{
-  (void)p;
-  (void)user_data;
-  return NULL;
-}
-
+/*
+ * Library constructor -- initialize the parser.
+ */
 __attribute__((constructor))
 static void
 _vp_init_parser()
@@ -83,41 +102,27 @@ _vp_init_parser()
   H_RULE(spc, h_ignore(h_ch(' ')));
   H_RULE(end, h_choice(h_ch('\n'), h_ch('\r'), NULL));
 
-  H_ADRULE(version, h_sequence(muse, spc, img, end, NULL), &parsed_version);
-
+  H_RULE(version, h_sequence(muse, spc, img, end, NULL));
   parser = version;
 }
 
-int32_t
-ix_version_find_start(const char* buf, size_t len)
-{
-  int32_t i;
-
-  for (i = 0; i + sizeof muse_spc < len; ++i) {
-    if (memcmp(buf + i, muse_spc, sizeof muse_spc) == 0) {
-      return i;
-    }
-  }
-
-  for (i = 1; i < (int32_t)sizeof muse_spc; ++i) {
-    if (memcmp(buf + len - i, muse_spc, i) == 0) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
+/*
+ * Parse failure -- no contents, return an error.
+ */
 static ix_vp_ret
 _vp_fail(enum _ix_vp_err code)
 {
   ix_vp_ret r;
 
+  assert(code != 0);
   r.err = code;
   r.end = 0;
   return r;
 }
 
+/*
+ * Parse success -- return next byte.
+ */
 static ix_vp_ret
 _vp_ok(size_t fed)
 {

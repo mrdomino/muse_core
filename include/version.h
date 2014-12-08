@@ -53,7 +53,7 @@ enum _ix_vp_err {
 };
 
 /*
- * Return of parse_version.
+ * Return of version_parse.
  *
  * If err == 0, end is the first byte after the version string and trailing
  * newline. If err is nonzero, then it describes what went wrong.
@@ -68,6 +68,8 @@ typedef struct {
  * Looks for a possible Muse version string in buf.
  *
  * Returns the start of the string if found, or -1 if none.
+ *
+ * Thread-safe (reentrant).
  */
 SO_EXPORT
 int32_t
@@ -76,7 +78,7 @@ ix_version_find_start(const char* buf, size_t len);
 /*
  * Parses a muse version string.
  *
- * If this returns negative, the contents of cfg are undefined.
+ * Thread-hostile -- uses a global data structure to store intermediate data.
  */
 SO_EXPORT
 ix_vp_ret
