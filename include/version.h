@@ -80,4 +80,4 @@ ix_version_find_start(const char* buf, size_t len);
  */
 SO_EXPORT
 ix_vp_ret
-ix_version_parse(const char* buf, size_t len, ix_muse_version* cfg);
+ix_version_parse(const char* buf, size_t len, ix_muse_version* ver);

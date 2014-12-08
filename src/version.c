@@ -129,7 +129,7 @@ _vp_ok(size_t fed)
 }
 
 ix_vp_ret
-ix_version_parse(const char* buf, size_t len, ix_muse_version* out)
+ix_version_parse(const char* buf, size_t len, ix_muse_version* ver)
 {
   HParseResult *r;
 
@@ -138,7 +138,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* out)
 
   if (r) {
     assert(r->bit_length % 8 == 0);
-    memcpy(out, &parsed_version, sizeof parsed_version);
+    memcpy(ver, &parsed_version, sizeof parsed_version);
     return _vp_ok(r->bit_length / 8);
   }
   else return _vp_fail(IX_VP_BAD_STR);
