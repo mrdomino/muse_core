@@ -29,7 +29,7 @@ namespace version {
   ix_muse_version parse(::std::string const& s) {
     ix_muse_version out;
     auto ret = ix_version_parse(s.c_str(), s.size(), &out);
-    if (ret.end >= 0) {
+    if (ret.err == 0) {
       return out;
     }
     else switch (ret.err) {
@@ -64,7 +64,7 @@ TEST(VersionTest, FindStartOfMinVer) {
   EXPECT_EQ(1, version::findStart(buf));
 }
 
-TEST(VersionTest, ParseNeedMorePrefix) {
+TEST(VersionTest, DISABLED_ParseNeedMorePrefix) {
   auto s = std::string{MUSE_MINVER};
   // MUSE_MINVER ends in a number, so we'd need to see one more char to know we
   // had the whole thing
@@ -80,7 +80,18 @@ TEST(VersionTest, ParseBadStrings) {
   // TODO(soon): malicious version strings, near misses, invalid types
 }
 
-TEST(VersionTest, ParseMinimal) {
+// TODO(soon): test these against valid strings
+TEST(VersionTest, tsst) {
+  auto ver = version::parse("MUSE APP\n");
+  EXPECT_EQ(IX_IMG_APP, ver.img_type);
+  ver = version::parse("MUSE BOOT\n");
+  EXPECT_EQ(IX_IMG_BOOT, ver.img_type);
+  ver = version::parse("MUSE TEST\n");
+  EXPECT_EQ(IX_IMG_TEST, ver.img_type);
+  EXPECT_THROW(version::parse("MUSE UNKNOWN\n"), version::BadStr);
+}
+
+TEST(VersionTest, DISABLED_ParseMinimal) {
   auto ver = version::parse(MUSE_MINVER "\n");
   EXPECT_EQ(IX_IMG_APP, ver.img_type);
   EXPECT_EQ(0, ver.hw_version.x);

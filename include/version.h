@@ -55,13 +55,12 @@ enum _ix_vp_err {
 /*
  * Return of parse_version.
  *
- * If end >= 0, then the parse was successful and end points to the byte
- * after the version string. If end < 0, then there was a parse error
- * described by err.
+ * If err == 0, end is the first byte after the version string and trailing
+ * newline. If err is nonzero, then it describes what went wrong.
  */
 typedef struct {
-  int32_t          end;
-  enum _ix_vp_err  err;
+  size_t          end;
+  enum _ix_vp_err err;
 } ix_vp_ret;
 
 
