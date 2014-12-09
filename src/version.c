@@ -1,4 +1,4 @@
-/* Copyright 2014 Interaxon, Inc. */
+/* Copyright 2014 InteraXon, Inc. */
 
 #include <assert.h>
 #include <ctype.h>
