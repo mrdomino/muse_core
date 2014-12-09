@@ -29,9 +29,9 @@ ifeq ($(OS),WIN)
   LIB_EXT=lib
 endif
 
-CC = gcc
+CC = clang
 LD = $(CC)
-CXX = g++
+CXX = clang++
 CXXLD = $(CXX)
 GTEST_SRC = 3rdparty/gtest
 HAMMER_SRC = 3rdparty/hammer
