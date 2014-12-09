@@ -11,22 +11,8 @@
 #include "except.h"
 #include "version.h"
 
-static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
-static const char pp_spc[] = { 'P', 'P', ' ' };
-static const char oot_spc[] = { 'O', 'O', 'T', ' ' };
-static const char est_spc[] = { 'E', 'S', 'T', ' ' };
-static const char hw[] = { 'H', 'W' };
-static const char fw[] = { 'F', 'W' };
-static const char bl[] = { 'B', 'L' };
-static const char fw_build[] = { 'F', 'W', '_', 'B', 'U', 'I', 'L', 'D' };
-static const char fw_target_hw[] = {
-  'F', 'W', '_', 'T', 'A', 'R', 'G', 'E', 'T', '_', 'H', 'W'
-};
-static const char fw_type[] = { 'F', 'W', '_', 'T', 'Y', 'P', 'E' };
-static const char onsumer[] = { 'o', 'n', 's', 'u', 'm', 'e', 'r' };
-static const char esearch[] = { 'e', 's', 'e', 'a', 'r', 'c', 'h' };
-static const char proto[] = { 'P', 'R', 'O', 'T', 'O' };
 
+static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
 
 static HParser *parser;
 /* TODO(soon): figure out how to make this not global. */
@@ -144,6 +130,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* ver)
   if (r) {
     assert(r->bit_length % 8 == 0);
     memcpy(ver, &parsed_version, sizeof parsed_version);
+    h_parse_result_free(r);
     return _vp_ok(r->bit_length / 8);
   }
   else return _vp_fail(IX_VP_BAD_STR);
