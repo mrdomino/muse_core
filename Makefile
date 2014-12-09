@@ -62,10 +62,12 @@ LDFLAGS = $(LDOSFLAGS) $(OFLAGS)
 LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefined
 
 SRCOBJS = src/except.o \
+          src/packet.o \
           src/util.o \
           src/version.o
 
-TESTOBJS = test/version_test.o
+TESTOBJS = test/packet_test.o \
+           test/version_test.o
 
 ALLOBJS = $(SRCOBJS) $(TESTOBJS)
 
@@ -84,6 +86,7 @@ stats: $(LIB)
 
 $(ALLOBJS): include/defs.h \
             include/except.h \
+            include/packet.h \
             include/util.h \
             include/version.h \
             build/include/hammer/hammer.h
