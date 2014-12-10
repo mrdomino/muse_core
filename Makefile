@@ -61,9 +61,11 @@ CXXTESTFLAGS = $(CXXFLAGS) $(CXXTESTOSFLAGS)
 LDFLAGS = $(LDOSFLAGS) $(OFLAGS)
 LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefined
 
-SRCOBJS = src/except.o \
+SRCOBJS = src/connect.o \
+          src/except.o \
           src/packet.o \
           src/util.o \
+          src/r.o \
           src/version.o
 
 TESTOBJS = test/packet_test.o \
