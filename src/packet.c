@@ -18,6 +18,7 @@ struct _ix_packet {
 static HParser *parser;
 
 
+// TODO(soon): finish the packet parser
 static bool
 validate_type(HParseResult* p, void* user_data)
 {
@@ -81,6 +82,7 @@ ix_packet_get_type(const ix_packet* pac)
   return pac->type;
 }
 
+// TODO(soon): use ix_result everywhere, remove these
 static ix_pp_ret
 _pp_fail(int16_t err)
 {

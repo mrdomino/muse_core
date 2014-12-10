@@ -9,6 +9,9 @@ extern "C" {
 #include <gtest/gtest.h>
 #include <string>
 
+// TODO(soon): test cases for all packet types + failures
+// TODO(soon): + a helper to produce arbitrary packet-like things
+
 namespace {
 
 TEST(PacketTest, ParsesDroppedSampleFlag) {

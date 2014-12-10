@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "util.h"
 
+// TODO(soon): delete me
 size_t
 ix_strlcpy(char* dst, const char* src, size_t size)
 {

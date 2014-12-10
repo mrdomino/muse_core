@@ -38,6 +38,8 @@ ix_version_find_start(const char* buf, size_t len)
   return -1;
 }
 
+// TODO(soon): finish the version parser
+
 /*
  * Action to take on parsing an ix_img_type token.
  */
@@ -90,6 +92,8 @@ _vp_init_parser()
   H_RULE(version, h_sequence(muse, spc, img, end, NULL));
   parser = version;
 }
+
+// TODO(soon): remove these, use ix_result everywhere
 
 /*
  * Parse failure -- no contents, return an error.

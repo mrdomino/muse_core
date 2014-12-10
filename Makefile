@@ -63,11 +63,12 @@ LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefine
 
 SRCOBJS = src/connect.o \
           src/packet.o \
-          src/util.o \
           src/r.o \
+          src/util.o \
           src/version.o
 
-TESTOBJS = test/packet_test.o \
+TESTOBJS = test/connect_test.o \
+           test/packet_test.o \
            test/version_test.o
 
 ALLOBJS = $(SRCOBJS) $(TESTOBJS)
@@ -87,8 +88,10 @@ stats: $(LIB)
 
 $(ALLOBJS): include/defs.h \
             include/packet.h \
+            include/serial.h \
             include/util.h \
             include/version.h \
+            src/r.h \
             build/include/hammer/hammer.h
 
 $(LIB): $(SRCOBJS)
