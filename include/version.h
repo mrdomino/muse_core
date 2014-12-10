@@ -6,11 +6,12 @@
  * include "defs.h"     for SO_EXPORT
  */
 
-/*
- * Smallest possible valid muse version string.
- */
 #define MUSE_MINVER "MUSE APP HW-0.0 FW-0.0.0 BL-0.0.0 FW_BUILD-0 " \
                     "FW_TARGET_HW-0.0 FW_TYPE- PROTO-2"
+
+#define MUSE_MAXVER "MUSE TEST HW-255.255 FW-255.255.255 BL-255.255.255 " \
+                    "FW_BUILD-65535 FW_TARGET_HW-255.255 FW_TYPE-research " \
+                    "PROTO-2"
 
 
 typedef enum {
