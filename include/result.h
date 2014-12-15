@@ -1,5 +1,6 @@
 /*
  * include <stdint.h> for sized int types.
+ * include "defs.h" for SO_EXPORT
  */
 
 /*
@@ -10,16 +11,17 @@
  */
 typedef enum _ix_err {
   IX_OK,
-  IX_ERR_NEED_MORE,
-  IX_ERR_BAD_STR,
-  IX_ERR_BAD_VER
+  IX_EMOREDATA,
+  IX_ECAPACITY,
+  IX_EBADSTR,
+  IX_EBADVER,
 } ix_err;
 
 /*
  * Return type of a function that could fail.
  *
  * If err is IX_OK, the function succeeded. Otherwise, the function failed. The
- * contents of ok are dependent on the function that produced the result in
+ * contents of res are dependent on the function that produced the result in
  * question.
  */
 typedef struct {
@@ -29,5 +31,9 @@ typedef struct {
     uint32_t                  uin;
     struct _ix_connection*    con;
     void*                     ptr;
-  }                         ok;
+  }                         res;
 } ix_result;
+
+SO_EXPORT
+const char*
+ix_strerror(ix_err e);

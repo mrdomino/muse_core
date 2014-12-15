@@ -4,6 +4,7 @@
  * include <stddef.h> for size_t
  * include <stdint.h> for sized ints
  * include "defs.h" for SO_EXPORT
+ * include "result.h" for ix_result
  */
 
 typedef enum {
@@ -19,13 +20,6 @@ typedef enum {
 
 typedef struct _ix_packet ix_packet;
 
-// TODO(soon): use ix_result everywhere
-typedef struct {
-  int16_t  err;   /* error message, or 0 if successful */
-  uint32_t nread; /* number of bytes consumed */
-  uint16_t npacs; /* number of parsed packets written to pacs */
-} ix_pp_ret;
-
 
 /*
  * Get the type of a packet.
@@ -35,13 +29,36 @@ ix_packet_type
 ix_packet_get_type(const ix_packet* pac);
 
 /*
- * Parses a sequence of packets from a buffer.
+ * Find the offset of the next sync packet in buf.
  *
- * Returns a struct describing the results. If r.err == 0, the operation
- * succeeded, r.nread is the offset of the first byte not consumed and r.npacs
- * is the number of packets parsed and returned.
+ * Returns err == IX_OK, res.uin == first byte past the sync if one was found.
+ * If no sync, then err == IX_EMOREDATA and res is undefined.
  */
 SO_EXPORT
-ix_pp_ret
+ix_result
+ix_packet_find_sync(const uint8_t* buf, size_t len);
+
+/*
+ * Parse a sequence of packets from a buffer.
+ *
+ * Returns err == IX_OK, res.uin == offset of first unparsed byte on successful
+ * parse. Parsed packets are returned via pacs, which is an array of cpacs
+ * packet pointers. npacs is set to the number of successfully parsed packets.
+ *
+ * If err == IX_ECAPACITY, this could have parsed more packets than it did, but
+ * was limited by cpacs. In this case, res.uin is still the offset of the first
+ * unparsed byte, and pacs / npacs still contain the partial results. It need
+ * not be the case that npacs == cpacs here; for instance, if a certain
+ * sequence of bytes would have led to multiple packets being parsed such that
+ * the total would be greater than npacs, then no packets would be parsed from
+ * that byte sequence. The reasonable action to take in this case is to act on
+ * the already-parsed packets (if any), increase cpacs (if npacs was 0), and
+ * call again starting from buf + res.uin.
+ *
+ * If err == EBADSTR, the parse failed, and all the data in buf should be
+ * treated as garbage up until the next sync packet.
+ */
+SO_EXPORT
+ix_result
 ix_packet_parse(const uint8_t* buf, size_t len,
-                ix_packet* pacs, size_t cpacs);
+                ix_packet** pacs, size_t cpacs, size_t* npacs);

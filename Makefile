@@ -64,6 +64,7 @@ LDTESTFLAGS = $(LDFLAGS) $(LDTESTOSFLAGS) -fsanitize=address -fsanitize=undefine
 SRCOBJS = src/connect.o \
           src/packet.o \
           src/r.o \
+          src/result.o \
           src/util.o \
           src/version.o
 

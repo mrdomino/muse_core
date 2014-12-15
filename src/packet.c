@@ -7,8 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "defs.h"
-
+#include "result.h"
 #include "packet.h"
+#include "r.h"
 
 
 struct _ix_packet {
@@ -82,40 +83,20 @@ ix_packet_get_type(const ix_packet* pac)
   return pac->type;
 }
 
-// TODO(soon): use ix_result everywhere, remove these
-static ix_pp_ret
-_pp_fail(int16_t err)
-{
-  ix_pp_ret r;
-
-  assert(err != 0);
-  r.err = err;
-  return r;
-}
-
-static ix_pp_ret
-_pp_ok(uint32_t nread, uint16_t npacs)
-{
-  ix_pp_ret r;
-
-  r.err = 0;
-  r.nread = nread;
-  r.npacs = npacs;
-  return r;
-}
-
-ix_pp_ret
-ix_packet_parse(const uint8_t* buf, size_t len, ix_packet* pacs, size_t cpacs)
+ix_result
+ix_packet_parse(const uint8_t* buf, size_t len, ix_packet** pacs, size_t cpacs,
+                size_t* npacs)
 {
   HParseResult *r = h_parse(parser, buf, len);
 
-  (void)pacs;
   (void)cpacs;
+  (void)pacs;
+  (void)npacs;
 
   if (r) {
     assert(r->bit_length % 8 == 0);
     h_parse_result_free(r);
-    return _pp_ok(r->bit_length / 8, 0);
+    return ix_r_uin(r->bit_length / 8);
   }
-  else return _pp_fail(-1);
+  else return ix_r_err(IX_EBADSTR);
 }

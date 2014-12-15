@@ -2,10 +2,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "defs.h"
-#include "packet.h"
 #include "result.h"
-#include "r.h"
+#include "packet.h"
 #include "connect.h"
+#include "r.h"
 
 struct _ix_connection {
   int        fd;

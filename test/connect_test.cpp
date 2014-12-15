@@ -3,8 +3,8 @@
 
 extern "C" {
 #include "defs.h"
-#include "packet.h"
 #include "result.h"
+#include "packet.h"
 #include "connect.h"
 }
 
