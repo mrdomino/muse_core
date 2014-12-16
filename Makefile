@@ -1,7 +1,21 @@
 default: all
+-include config.mk
 
-A = a
-S = so
+UNAME = $(shell uname)
+ifeq (Linux,$(UNAME))
+  OS=linux
+else ifeq (Darwin,$(UNAME))
+  OS=osx
+else
+  VER = $(shell ver)
+  ifneq (,$(filter Windows,$(VER)))
+    OS=win
+  else
+    $(error unknown os)
+  endif
+endif
+
+-include config.$(OS).mk
 
 SRCDIR = $(PWD)
 BUILDDIR = $(PWD)/build
@@ -17,9 +31,7 @@ INCDIR = $(DESTDIR)$(PREFIX)/include
 INCS = -I$(INCDIR) -I$(BUILDINCDIR)
 LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR)
 
-CFLAGS = $(INCS)
-
-CFLAGS_S = -fPIC
+CFLAGS += $(INCS)
 
 MUSE_CORE_MOD = connect packet r result util version
 
@@ -34,7 +46,18 @@ MUSE_CORE_S = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/$(mod).o)
 LIBMUSE_CORE_S = $(LIBDIR)/libmuse_core.$S
 LIBMUSE_CORE_A = $(LIBDIR)/libmuse_core.$A
 
-all: dirs deps copy-headers lib
+all: options dirs deps copy-headers lib
+
+options:
+	@echo build options:
+	@echo "CC       $(CC)"
+	@echo "LD       $(LD)"
+	@echo "CXX      $(CXX)"
+	@echo "CXXLD    $(CXXLD)"
+	@echo "CFLAGS   $(CFLAGS)"
+	@echo "CFLAGS_S $(CFLAGS_S)"
+	@echo "CXXFLAGS $(CXXFLAGS)"
+	@echo "LDFLAGS  $(LDFLAGS)"
 
 DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S) $(BUILDDIR_A) $(LIBDIR) \
        $(MUSE_CORE_INCDIR)
@@ -50,7 +73,7 @@ lib: $(LIBMUSE_CORE_S) $(LIBMUSE_CORE_A)
 copy-headers: $(MUSE_CORE_H)
 
 $(LIBMUSE_CORE_S): $(MUSE_CORE_S)
-	@echo $(LD) $(LIBMUSE_CORE_S)
+	@echo ld $(LIBMUSE_CORE_S)
 	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S)
 
 $(LIBMUSE_CORE_A): $(MUSE_CORE_A)
@@ -76,7 +99,15 @@ deps: $(HAMMER_A) $(HAMMER_H)
 
 $(HAMMER_A) $(HAMMER_H):
 	@echo building hammer
-	@scons -C 3rdparty/hammer
-	@scons -C 3rdparty/hammer install prefix=$(BUILDDIR)
+	@scons -C 3rdparty/hammer >/dev/null 2>&1
+	@echo installing hammer to $(BUILDDIR)
+	@scons -C 3rdparty/hammer install prefix=$(BUILDDIR) >/dev/null 2>&1
 
-.PHONY: all copy-headers default deps dirs lib
+clean:
+	rm -rf build
+
+distclean: clean
+	git clean -xdf
+	git submodule foreach git clean -xdf
+
+.PHONY: all clean copy-headers default deps dirs distclean lib options
