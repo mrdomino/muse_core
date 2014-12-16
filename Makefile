@@ -50,14 +50,15 @@ all: options dirs deps copy-headers lib
 
 options:
 	@echo build options:
-	@echo "CC       $(CC)"
-	@echo "LD       $(LD)"
-	@echo "CXX      $(CXX)"
-	@echo "CXXLD    $(CXXLD)"
-	@echo "CFLAGS   $(CFLAGS)"
-	@echo "CFLAGS_S $(CFLAGS_S)"
-	@echo "CXXFLAGS $(CXXFLAGS)"
-	@echo "LDFLAGS  $(LDFLAGS)"
+	@echo "CC         $(CC)"
+	@echo "LD         $(LD)"
+	@echo "CFLAGS     $(CFLAGS)"
+	@echo "CFLAGS_S   $(CFLAGS_S)"
+	@echo "LDFLAGS    $(LDFLAGS)"
+	@echo "CXX        $(CXX)"
+	@echo "CXXFLAGS   $(CXXFLAGS)"
+	@echo "CXXLD      $(CXXLD)"
+	@echo "CXXLDFLAGS $(CXXLDFLAGS)"
 
 DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S) $(BUILDDIR_A) $(LIBDIR) \
        $(MUSE_CORE_INCDIR)
