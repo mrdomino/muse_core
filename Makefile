@@ -29,9 +29,10 @@ LIBDIR = $(DESTDIR)$(PREFIX)/lib
 INCDIR = $(DESTDIR)$(PREFIX)/include
 
 INCS = -I$(INCDIR) -I$(BUILDINCDIR)
-LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR)
+LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR) -lhammer
 
 CFLAGS += $(INCS)
+LDFLAGS += $(LIBS) -Wl,-rpath=$(PREFIX)/lib,--enable-new-dtags
 
 MUSE_CORE_MOD = connect packet r result util version
 
@@ -75,7 +76,7 @@ copy-headers: $(MUSE_CORE_H)
 
 $(LIBMUSE_CORE_S): $(MUSE_CORE_S)
 	@echo ld $(LIBMUSE_CORE_S)
-	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S)
+	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S) $(LDFLAGS)
 
 $(LIBMUSE_CORE_A): $(MUSE_CORE_A)
 	@echo ar $(LIBMUSE_CORE_A)
