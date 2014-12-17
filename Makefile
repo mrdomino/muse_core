@@ -136,8 +136,8 @@ unittests: $(LIBMUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
            $(GTEST_MAIN_A) $(HAMMER_A)
 	@echo c++ld $@
 	@$(CXXLD) -o unittests \
-	  -Wl,-rpath=$(LIBDIR):$(BUILDLIBDIR),--enable-new-dtags $(LDFLAGS) \
-	  $(CXXFLAGS) $(UNITTEST_A_O) -lmuse_core -lhammer -lgtest -lgtest_main
+	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(LDFLAGS) $(CXXFLAGS) \
+	  $(UNITTEST_A_O) -lmuse_core -lhammer -lgtest -lgtest_main
 
 $(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
 	@echo c++ $@
