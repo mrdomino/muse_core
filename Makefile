@@ -34,6 +34,7 @@ LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR) -lhammer
 CFLAGS += $(INCS)
 CXXFLAGS += $(INCS)
 LDFLAGS += $(LIBS)
+CXXLDFLAGS += $(LIBS)
 
 MUSE_CORE_MOD = connect packet r result util version
 
@@ -136,7 +137,7 @@ unittests: $(LIBMUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
            $(GTEST_MAIN_A) $(HAMMER_A)
 	@echo c++ld $@
 	@$(CXXLD) -o unittests \
-	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(LDFLAGS) $(CXXFLAGS) \
+	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
 	  $(UNITTEST_A_O) -lmuse_core -lhammer -lgtest -lgtest_main
 
 $(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
