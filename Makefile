@@ -62,7 +62,6 @@ options:
 	@echo "CXXFLAGS           = $(CXXFLAGS)"
 	@echo "CXXLD              = $(CXXLD)"
 	@echo "CXXLDFLAGS         = $(CXXLDFLAGS)"
-	@echo "GTEST_CXXFLAGS     = $(GTEST_CXXFLAGS)"
 	@echo "USE_BUNDLED_HAMMER = $(USE_BUNDLED_HAMMER)"
 	@echo "SKIP_TESTS         = $(SKIP_TESTS)"
 	@echo
@@ -100,6 +99,7 @@ $(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c
 $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS) $<
+
 clean:
 	rm -rf build
 
@@ -116,21 +116,9 @@ distclean: clean
 ifeq (,$(SKIP_TESTS))
 
 GTEST_SRC = 3rdparty/gtest
-GTEST_CXXFLAGS += -I$(GTEST_SRC) -I$(GTEST_SRC)/include
+CXXFLAGS += -I$(GTEST_SRC) -I$(GTEST_SRC)/include
 GTEST_A = $(BUILDLIBDIR)/libgtest.$A
 GTEST_MAIN_A = $(BUILDLIBDIR)/libgtest_main.$A
-
-deps: $(GTEST_A) $(GTEST_MAIN_A)
-
-$(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
-	@echo c++ $@
-	@$(CXX) -static -c -o $(GTEST_A) $(CXXFLAGS) $(GTEST_CXXFLAGS) \
-	  -Wno-missing-field-initializers $(GTEST_SRC)/src/gtest-all.cc
-
-$(GTEST_MAIN_A): $(GTEST_SRC)/src/gtest_main.cc
-	@echo c++ $@
-	@$(CXX) -static -c -o $(GTEST_MAIN_A) $(CXXFLAGS) $(GTEST_CXXFLAGS) \
-	  $(GTEST_SRC)/src/gtest_main.cc
 
 all: test
 
@@ -143,14 +131,23 @@ UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
 $(BUILDDIR_A)/test/%.o: test/%.cpp
 	@echo c++ $@
-	@$(CXX) -c -o $@ $(CXXFLAGS) $(GTEST_CXXFLAGS) $<
+	@$(CXX) -c -o $@ $(CXXFLAGS) $<
 
 unittests: $(LIBMUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
            $(GTEST_MAIN_A) $(HAMMER_A)
 	@echo c++ld $@
 	@$(CXX) -o unittests -Wl,-rpath=$(LIBDIR):$(BUILDLIBDIR),--enable-new-dtags \
-	  $(LDFLAGS) $(CXXFLAGS) $(GTEST_CXXFLAGS) $(UNITTEST_A_O) -lmuse_core \
-	  -lhammer -lgtest -lgtest_main
+	  $(LDFLAGS) $(CXXFLAGS) $(UNITTEST_A_O) -lmuse_core -lhammer -lgtest \
+	  -lgtest_main
+
+$(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
+	@echo c++ $@
+	@$(CXX) -static -c -o $(GTEST_A) $(CXXFLAGS) $(GTEST_SRC)/src/gtest-all.cc
+
+$(GTEST_MAIN_A): $(GTEST_SRC)/src/gtest_main.cc
+	@echo c++ $@
+	@$(CXX) -static -c -o $(GTEST_MAIN_A) $(CXXFLAGS) \
+	  $(GTEST_SRC)/src/gtest_main.cc
 
 endif
 
