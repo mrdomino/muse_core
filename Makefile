@@ -125,7 +125,7 @@ test: unittests
 	@echo unittests
 	@./unittests
 
-UNITTEST_MOD = connect_test packet_test version_test
+UNITTEST_MOD = connect_test muse_core_test packet_test version_test
 UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
 $(BUILDDIR_A)/test/%.o: test/%.cpp
