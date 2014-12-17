@@ -1,9 +1,0 @@
-- Build into a dist_dir with include and lib dirs
-
-- Build both static and dynamic libs
-
-- De-confuseify the build.
-
-- Include something like <muse_core/muse_core.h> from tests
-
-See also "ack --ignore-dir=3rdparty TODO"
