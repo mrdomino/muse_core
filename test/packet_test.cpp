@@ -2,9 +2,9 @@
 #include <cstdint>
 
 extern "C" {
-#include "defs.h"
-#include "result.h"
-#include "packet.h"
+#include <muse_core/defs.h>
+#include <muse_core/result.h>
+#include <muse_core/packet.h>
 }
 
 #include <gtest/gtest.h>

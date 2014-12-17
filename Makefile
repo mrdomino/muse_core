@@ -17,14 +17,14 @@ endif
 
 -include config.$(OS).mk
 
-SRCDIR = $(PWD)
-BUILDDIR = $(PWD)/build
+SRCDIR = src
+BUILDDIR = build
 BUILDLIBDIR = $(BUILDDIR)/lib
 BUILDINCDIR = $(BUILDDIR)/include
 BUILDDIR_S = $(BUILDDIR)/s
 BUILDDIR_A = $(BUILDDIR)/a
 
-DESTDIR = $(PWD)/dist
+DESTDIR = dist
 LIBDIR = $(DESTDIR)$(PREFIX)/lib
 INCDIR = $(DESTDIR)$(PREFIX)/include
 INST_LIBDIR = $(PREFIX)/lib
@@ -33,7 +33,8 @@ INCS = -I$(INCDIR) -I$(BUILDINCDIR)
 LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR) -lhammer
 
 CFLAGS += $(INCS)
-LDFLAGS += $(LIBS) -Wl,-rpath=$(INST_LIBDIR),--enable-new-dtags
+CXXFLAGS += $(INCS)
+LDFLAGS += $(LIBS)
 
 MUSE_CORE_MOD = connect packet r result util version
 
@@ -41,9 +42,9 @@ MUSE_CORE_INC = connect defs muse_core packet result serial util version
 
 MUSE_CORE_INCDIR = $(INCDIR)/muse_core
 
-MUSE_CORE_A = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/$(mod).o)
+MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(MUSE_CORE_INCDIR)/$(inc).h)
-MUSE_CORE_S = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/$(mod).o)
+MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 
 LIBMUSE_CORE_S = $(LIBDIR)/libmuse_core.$S
 LIBMUSE_CORE_A = $(LIBDIR)/libmuse_core.$A
@@ -52,18 +53,22 @@ all: options dirs deps copy-headers lib
 
 options:
 	@echo build options:
-	@echo "CC         $(CC)"
-	@echo "LD         $(LD)"
-	@echo "CFLAGS     $(CFLAGS)"
-	@echo "CFLAGS_S   $(CFLAGS_S)"
-	@echo "LDFLAGS    $(LDFLAGS)"
-	@echo "CXX        $(CXX)"
-	@echo "CXXFLAGS   $(CXXFLAGS)"
-	@echo "CXXLD      $(CXXLD)"
-	@echo "CXXLDFLAGS $(CXXLDFLAGS)"
+	@echo "CC                 = $(CC)"
+	@echo "LD                 = $(LD)"
+	@echo "CFLAGS             = $(CFLAGS)"
+	@echo "CFLAGS_S           = $(CFLAGS_S)"
+	@echo "LDFLAGS            = $(LDFLAGS)"
+	@echo "CXX                = $(CXX)"
+	@echo "CXXFLAGS           = $(CXXFLAGS)"
+	@echo "CXXLD              = $(CXXLD)"
+	@echo "CXXLDFLAGS         = $(CXXLDFLAGS)"
+	@echo "GTEST_CXXFLAGS     = $(GTEST_CXXFLAGS)"
+	@echo "USE_BUNDLED_HAMMER = $(USE_BUNDLED_HAMMER)"
+	@echo "SKIP_TESTS         = $(SKIP_TESTS)"
+	@echo
 
-DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S) $(BUILDDIR_A) $(LIBDIR) \
-       $(MUSE_CORE_INCDIR)
+DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S)/src $(BUILDDIR_A)/src \
+       $(BUILDDIR_A)/test $(LIBDIR) $(MUSE_CORE_INCDIR)
 
 dirs: $(DIRS)
 
@@ -75,25 +80,84 @@ lib: $(LIBMUSE_CORE_S) $(LIBMUSE_CORE_A)
 
 copy-headers: $(MUSE_CORE_H)
 
-$(LIBMUSE_CORE_S): $(MUSE_CORE_S)
+$(LIBMUSE_CORE_S): $(MUSE_CORE_S_O)
 	@echo ld $(LIBMUSE_CORE_S)
-	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S) $(LDFLAGS)
+	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S_O) \
+	  $(LDFLAGS)
 
-$(LIBMUSE_CORE_A): $(MUSE_CORE_A)
+$(LIBMUSE_CORE_A): $(MUSE_CORE_A_O)
 	@echo ar $(LIBMUSE_CORE_A)
-	@ar rcs $(LIBMUSE_CORE_A) $(MUSE_CORE_A)
+	@ar rcs $(LIBMUSE_CORE_A) $(MUSE_CORE_A_O)
 
-$(MUSE_CORE_INCDIR)/%.h: src/%.h
+$(MUSE_CORE_INCDIR)/%.h: $(SRCDIR)/%.h
 	@echo copying $@
 	@cp $< $@
 
-$(BUILDDIR_S)/%.o: src/%.c
+$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS_S) $(CFLAGS) $<
 
-$(BUILDDIR_A)/%.o: src/%.c
+$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS) $<
+clean:
+	rm -rf build
+
+distclean: clean
+	git clean -xdf
+	git submodule foreach git clean -xdf
+
+.PHONY: all clean copy-headers default deps dirs distclean lib options
+
+
+################################################################################
+######  Dependency (for unittests): gtest                                 ######
+################################################################################
+ifeq (,$(SKIP_TESTS))
+
+GTEST_SRC = 3rdparty/gtest
+GTEST_CXXFLAGS += -I$(GTEST_SRC) -I$(GTEST_SRC)/include
+GTEST_A = $(BUILDLIBDIR)/libgtest.$A
+GTEST_MAIN_A = $(BUILDLIBDIR)/libgtest_main.$A
+
+deps: $(GTEST_A) $(GTEST_MAIN_A)
+
+$(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
+	@echo c++ $@
+	@$(CXX) -static -c -o $(GTEST_A) $(CXXFLAGS) $(GTEST_CXXFLAGS) \
+	  -Wno-missing-field-initializers $(GTEST_SRC)/src/gtest-all.cc
+
+$(GTEST_MAIN_A): $(GTEST_SRC)/src/gtest_main.cc
+	@echo c++ $@
+	@$(CXX) -static -c -o $(GTEST_MAIN_A) $(CXXFLAGS) $(GTEST_CXXFLAGS) \
+	  $(GTEST_SRC)/src/gtest_main.cc
+
+all: test
+
+test: unittests
+	@echo unittests
+	@./unittests
+
+UNITTEST_MOD = connect_test packet_test version_test
+UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
+
+$(BUILDDIR_A)/test/%.o: test/%.cpp
+	@echo c++ $@
+	@$(CXX) -c -o $@ $(CXXFLAGS) $(GTEST_CXXFLAGS) $<
+
+unittests: $(LIBMUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
+           $(GTEST_MAIN_A) $(HAMMER_A)
+	@echo c++ld $@
+	@$(CXX) -o unittests -Wl,-rpath=$(LIBDIR):$(BUILDLIBDIR),--enable-new-dtags \
+	  $(LDFLAGS) $(CXXFLAGS) $(GTEST_CXXFLAGS) $(UNITTEST_A_O) -lmuse_core \
+	  -lhammer -lgtest -lgtest_main
+
+endif
+
+################################################################################
+###### Dependency: hammer                                                 ######
+################################################################################
+ifneq (,$(USE_BUNDLED_HAMMER))
 
 HAMMER_A = $(BUILDLIBDIR)/libhammer.$A
 HAMMER_H = $(BUILDINCDIR)/hammer/glue.h $(BUILDINCDIR)/hammer/hammer.h
@@ -104,13 +168,6 @@ $(HAMMER_A) $(HAMMER_H):
 	@echo building hammer
 	@scons -C 3rdparty/hammer >/dev/null 2>&1
 	@echo installing hammer to $(BUILDDIR)
-	@scons -C 3rdparty/hammer install prefix=$(BUILDDIR) >/dev/null 2>&1
+	@scons -C 3rdparty/hammer install prefix=../../$(BUILDDIR) >/dev/null 2>&1
 
-clean:
-	rm -rf build
-
-distclean: clean
-	git clean -xdf
-	git submodule foreach git clean -xdf
-
-.PHONY: all clean copy-headers default deps dirs distclean lib options
+endif

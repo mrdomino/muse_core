@@ -2,10 +2,10 @@
 #include <cstdint>
 
 extern "C" {
-#include "defs.h"
-#include "result.h"
-#include "packet.h"
-#include "connect.h"
+#include <muse_core/defs.h>
+#include <muse_core/result.h>
+#include <muse_core/packet.h>
+#include <muse_core/connect.h>
 }
 
 #include <gtest/gtest.h>

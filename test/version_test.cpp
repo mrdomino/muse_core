@@ -4,9 +4,9 @@
 #include <cstdint>
 
 extern "C" {
-#include "defs.h"
-#include "result.h"
-#include "version.h"
+#include <muse_core/defs.h>
+#include <muse_core/result.h>
+#include <muse_core/version.h>
 }
 
 #include <gtest/gtest.h>
