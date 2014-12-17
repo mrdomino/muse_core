@@ -8,7 +8,9 @@
 #include <stdint.h>
 #include <string.h>
 #include "defs.h"
+#include "result.h"
 #include "version.h"
+#include "r.h"
 
 
 static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
@@ -93,36 +95,7 @@ _vp_init_parser()
   parser = version;
 }
 
-// TODO(soon): remove these, use ix_result everywhere
-
-/*
- * Parse failure -- no contents, return an error.
- */
-static ix_vp_ret
-_vp_fail(enum _ix_vp_err code)
-{
-  ix_vp_ret r;
-
-  assert(code != 0);
-  r.err = code;
-  r.end = 0;
-  return r;
-}
-
-/*
- * Parse success -- return next byte.
- */
-static ix_vp_ret
-_vp_ok(size_t fed)
-{
-  ix_vp_ret r;
-
-  r.err = 0;
-  r.end = fed;
-  return r;
-}
-
-ix_vp_ret
+ix_result
 ix_version_parse(const char* buf, size_t len, ix_muse_version* ver)
 {
   HParseResult *r;
@@ -134,7 +107,7 @@ ix_version_parse(const char* buf, size_t len, ix_muse_version* ver)
     assert(r->bit_length % 8 == 0);
     memcpy(ver, &parsed_version, sizeof parsed_version);
     h_parse_result_free(r);
-    return _vp_ok(r->bit_length / 8);
+    return ix_r_uin(r->bit_length / 8);
   }
-  else return _vp_fail(IX_VP_BAD_STR);
+  else return ix_r_err(IX_EBADSTR);
 }

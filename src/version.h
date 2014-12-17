@@ -3,6 +3,7 @@
 /*
  * include <stddef.h>   for size_t
  * include <stdint.h>   for sized int types
+ * include "result.h"   for ix_result
  * include "defs.h"     for SO_EXPORT
  */
 
@@ -46,24 +47,6 @@ typedef struct {
   ix_fw_type      fw_type;
 } ix_muse_version;
 
-enum _ix_vp_err {
-  IX_VP_FAIL = -1,
-  IX_VP_NEED_MORE = -2,
-  IX_VP_BAD_STR = -3,
-  IX_VP_BAD_VER = -4
-};
-
-/*
- * Return of version_parse.
- *
- * If err == 0, end is the first byte after the version string and trailing
- * newline. If err is nonzero, then it describes what went wrong.
- */
-typedef struct {
-  size_t          end;
-  enum _ix_vp_err err;
-} ix_vp_ret;
-
 
 /*
  * Looks for a possible Muse version string in buf.
@@ -82,5 +65,5 @@ ix_version_find_start(const char* buf, size_t len);
  * Thread-hostile -- uses a global data structure to store intermediate data.
  */
 SO_EXPORT
-ix_vp_ret
+ix_result
 ix_version_parse(const char* buf, size_t len, ix_muse_version* ver);

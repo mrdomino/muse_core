@@ -5,6 +5,7 @@
 
 extern "C" {
 #include "defs.h"
+#include "result.h"
 #include "version.h"
 }
 
@@ -29,18 +30,16 @@ namespace version {
   ix_muse_version parse(::std::string const& s) {
     ix_muse_version out;
     auto ret = ix_version_parse(s.c_str(), s.size(), &out);
-    if (ret.err == 0) {
+    if (ret.err == IX_OK) {
       return out;
     }
     else switch (ret.err) {
     default: assert(false);
-    case IX_VP_FAIL:
-      throw Failure();
-    case IX_VP_NEED_MORE:
+    case IX_EMOREDATA:
       throw NeedMore();
-    case IX_VP_BAD_STR:
+    case IX_EBADSTR:
       throw BadStr();
-    case IX_VP_BAD_VER:
+    case IX_EBADVER:
       throw BadVer();
     }
   }
