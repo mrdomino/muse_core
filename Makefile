@@ -101,7 +101,7 @@ $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c
 	@$(CC) -c -o $@ $(CFLAGS) $<
 
 clean:
-	rm -rf build
+	rm -rf $(BUILDDIR_A) $(BUILDDIR_S)
 
 distclean: clean
 	git clean -xdf
