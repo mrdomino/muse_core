@@ -27,12 +27,13 @@ BUILDDIR_A = $(BUILDDIR)/a
 DESTDIR = $(PWD)/dist
 LIBDIR = $(DESTDIR)$(PREFIX)/lib
 INCDIR = $(DESTDIR)$(PREFIX)/include
+INST_LIBDIR = $(PREFIX)/lib
 
 INCS = -I$(INCDIR) -I$(BUILDINCDIR)
 LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR) -lhammer
 
 CFLAGS += $(INCS)
-LDFLAGS += $(LIBS) -Wl,-rpath=$(PREFIX)/lib,--enable-new-dtags
+LDFLAGS += $(LIBS) -Wl,-rpath=$(INST_LIBDIR),--enable-new-dtags
 
 MUSE_CORE_MOD = connect packet r result util version
 
