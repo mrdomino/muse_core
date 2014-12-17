@@ -1,7 +1,9 @@
 CC = gcc
 LD = $(CC)
-CXX = g++
+CXX = clang++
+#CXX = g++
 CXXLD = $(CXX)
+CXXLDFLAGS += -fsanitize=address -fsanitize=undefined
 
 PREFIX = /usr/local
 
