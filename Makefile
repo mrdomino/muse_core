@@ -102,6 +102,7 @@ $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c
 
 clean:
 	rm -rf $(BUILDDIR_A) $(BUILDDIR_S)
+	rm -f unittests
 
 distclean: clean
 	git clean -xdf
