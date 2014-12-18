@@ -11,6 +11,7 @@
 #include "result.h"
 #include "version.h"
 #include "r.h"
+#include "initializer.h"
 
 
 static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
@@ -70,9 +71,7 @@ act_img(const HParseResult* p, void* user_data)
 /*
  * Library constructor -- initialize the parser.
  */
-__attribute__((constructor))
-static void
-_vp_init_parser()
+IX_INITIALIZER(_vp_init_parser)
 {
 #ifndef NDEBUG
   static int inited;

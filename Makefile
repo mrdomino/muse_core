@@ -7,8 +7,7 @@ ifeq (Linux,$(UNAME))
 else ifeq (Darwin,$(UNAME))
   OS=osx
 else
-  VER = $(shell ver)
-  ifneq (,$(filter Windows,$(VER)))
+  ifneq (,$(findstring Windows,$(PATH)))
     OS=win
   else
     $(error unknown os)
