@@ -1,6 +1,6 @@
+-include mk/posixish.mk
 A = a
 S = so
-CFLAGS += -fvisibility=hidden
-CFLAGS_S += -fPIC
-CXXFLAGS += -pthread -Wno-error=missing-field-initializers
+
+CXXFLAGS += -pthread
 CXXLDFLAGS += -Wl,--enable-new-dtags
