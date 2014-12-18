@@ -10,6 +10,7 @@
 #include "result.h"
 #include "packet.h"
 #include "r.h"
+#include "initializer.h"
 
 
 struct _ix_packet {
@@ -54,9 +55,7 @@ validate_flags_ndropped(HParseResult* p, void* user_data)
   return (p->ast->uint & 0x8) == 0;
 }
 
-__attribute__((constructor))
-static void
-_pp_init_parser()
+IX_INITIALIZER(_pp_init_parser)
 {
 #ifndef NDEBUG
   static int inited;
