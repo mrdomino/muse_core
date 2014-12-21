@@ -67,7 +67,7 @@ static bool
 validate_packet_sync(HParseResult* p, void* user_data)
 {
   (void)user_data;
-  return p->ast->uint == 0xffffaa55;
+  return p->ast->uint == 0x55aaffff;
 }
 
 IX_INITIALIZER(_pp_init_parser)
@@ -78,7 +78,13 @@ IX_INITIALIZER(_pp_init_parser)
   assert(!inited);
   inited = 1;
 #endif
+#define MUSE_ENDIAN (BYTE_LITTLE_ENDIAN | BIT_BIG_ENDIAN)
   H_RULE(nibble, h_bits(4, false));
+  H_RULE(short_, h_with_endianness(MUSE_ENDIAN, h_uint16()));
+  H_RULE(sample, h_with_endianness(MUSE_ENDIAN, h_bits(10, false)));
+  H_RULE(word_, h_with_endianness(MUSE_ENDIAN, h_uint32()));
+#undef MUSE_ENDIAN
+
   H_VRULE(type_eeg, nibble);
   H_VRULE(type_drl_ref, nibble);
   H_VRULE(type_battery, nibble);
@@ -86,13 +92,11 @@ IX_INITIALIZER(_pp_init_parser)
 
   H_VRULE(flags_dropped, nibble);
   H_VRULE(flags_ndropped, nibble);
-  H_RULE(dropped_samples, h_uint16());
+  H_RULE(dropped_samples, short_);
   H_RULE(dropped,
          h_choice(h_sequence(flags_dropped, dropped_samples, NULL),
                   flags_ndropped,
                   NULL));
-
-  H_RULE(sample, h_bits(10, false));
 
   /* TODO(soon): configurable number of EEG channels */
   H_RULE(packet_eeg,
@@ -103,12 +107,11 @@ IX_INITIALIZER(_pp_init_parser)
          h_sequence(type_drl_ref, flags_ndropped, h_repeat_n(sample, 2),
                     NULL));
   H_RULE(packet_battery,
-         h_sequence(type_battery, flags_ndropped, h_repeat_n(h_uint16(), 4),
+         h_sequence(type_battery, flags_ndropped, h_repeat_n(short_, 4),
                     NULL));
   H_RULE(packet_error,
-         h_sequence(type_error, flags_ndropped, h_uint32(), NULL));
-  H_VRULE(packet_sync,
-          h_with_endianness(BYTE_BIG_ENDIAN | BIT_BIG_ENDIAN, h_uint32()));
+         h_sequence(type_error, flags_ndropped, word_, NULL));
+  H_VRULE(packet_sync, word_);
 
   H_RULE(packet,
          h_choice(packet_eeg,
