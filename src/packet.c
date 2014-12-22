@@ -19,35 +19,23 @@ struct _ix_packet {
 
 static HParser *parser;
 
-
 // TODO(soon): finish the packet parser
-static bool
-validate_type_eeg(HParseResult* p, void* user_data)
-{
-  (void)user_data;
-  return p->ast->uint == 0xe;
-}
+#define VALIDATE_TYPE(x, n)                             \
+  static bool                                           \
+  validate_type_ ##x(HParseResult* p, void* user_data)  \
+  {                                                     \
+    (void)user_data;                                    \
+    return p->ast->uint == (n);                         \
+  }                                                     \
+  static bool validate_type_ ##x(HParseResult* p, void* user_data)
 
-static bool
-validate_type_drl_ref(HParseResult* p, void* user_data)
-{
-  (void)user_data;
-  return p->ast->uint == 0x9;
-}
+VALIDATE_TYPE(drl_ref, 0x9);
+VALIDATE_TYPE(acc,     0xa);
+VALIDATE_TYPE(battery, 0xb);
+VALIDATE_TYPE(error,   0xd);
+VALIDATE_TYPE(eeg,     0xe);
 
-static bool
-validate_type_battery(HParseResult* p, void* user_data)
-{
-  (void)user_data;
-  return p->ast->uint == 0xb;
-}
-
-static bool
-validate_type_error(HParseResult* p, void* user_data)
-{
-  (void)user_data;
-  return p->ast->uint == 0xd;
-}
+#undef VALIDATE_TYPE
 
 static bool
 validate_flags_dropped(HParseResult* p, void* user_data)
@@ -85,6 +73,7 @@ IX_INITIALIZER(_pp_init_parser)
   H_RULE(word_, h_with_endianness(MUSE_ENDIAN, h_uint32()));
 #undef MUSE_ENDIAN
 
+  H_VRULE(type_acc, nibble);
   H_VRULE(type_eeg, nibble);
   H_VRULE(type_drl_ref, nibble);
   H_VRULE(type_battery, nibble);
@@ -93,14 +82,21 @@ IX_INITIALIZER(_pp_init_parser)
   H_VRULE(flags_dropped, nibble);
   H_VRULE(flags_ndropped, nibble);
   H_RULE(dropped_samples, short_);
-  H_RULE(dropped,
+  H_RULE(flags,
          h_choice(h_sequence(flags_dropped, dropped_samples, NULL),
                   flags_ndropped,
                   NULL));
 
+  H_RULE(packet_acc,
+         h_sequence(type_acc,
+                    flags,
+                    h_repeat_n(sample, 3),
+                    h_ignore(h_bits(2, false)),
+                    NULL));
+
   /* TODO(soon): configurable number of EEG channels */
-  H_RULE(packet_eeg,
-         h_sequence(type_eeg, dropped, h_repeat_n(sample, 4), NULL));
+  H_RULE(packet_eeg4,
+         h_sequence(type_eeg, flags, h_repeat_n(sample, 4), NULL));
   /* TODO(soon): compressed EEG */
 
   H_RULE(packet_drl_ref,
@@ -114,7 +110,8 @@ IX_INITIALIZER(_pp_init_parser)
   H_VRULE(packet_sync, word_);
 
   H_RULE(packet,
-         h_choice(packet_eeg,
+         h_choice(packet_acc,
+                  packet_eeg4,
                   packet_drl_ref,
                   packet_battery,
                   packet_error,
