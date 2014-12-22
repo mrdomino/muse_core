@@ -129,6 +129,8 @@ test: unittests
 UNITTEST_MOD = connect_test muse_core_test packet_test version_test
 UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
+$(UNITTEST_A_O): $(MUSE_CORE_H)
+
 $(BUILDDIR_A)/test/%.o: test/%.cpp
 	@echo c++ $@
 	@$(CXX) -c -o $@ $(CXXFLAGS) $<
