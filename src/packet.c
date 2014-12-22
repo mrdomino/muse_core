@@ -22,23 +22,31 @@ static HParser *parser;
 
 // TODO(soon): finish the packet parser
 static bool
-validate_type(HParseResult* p, void* user_data)
+validate_type_eeg(HParseResult* p, void* user_data)
 {
   (void)user_data;
-  switch (p->ast->uint) {
-  case 0xf:
-  case 0xe:
-  case 0xd:
-  case 0xc:
-  case 0xb:
-  case 0xa:
-  case 0x9:
-    return true;
-  case 0x0:
-    return true; /* XXX ??? */
-  default:
-    return false;
-  }
+  return p->ast->uint == 0xe;
+}
+
+static bool
+validate_type_drl_ref(HParseResult* p, void* user_data)
+{
+  (void)user_data;
+  return p->ast->uint == 0x9;
+}
+
+static bool
+validate_type_battery(HParseResult* p, void* user_data)
+{
+  (void)user_data;
+  return p->ast->uint == 0xb;
+}
+
+static bool
+validate_type_error(HParseResult* p, void* user_data)
+{
+  (void)user_data;
+  return p->ast->uint == 0xd;
 }
 
 static bool
@@ -55,6 +63,13 @@ validate_flags_ndropped(HParseResult* p, void* user_data)
   return (p->ast->uint & 0x8) == 0;
 }
 
+static bool
+validate_packet_sync(HParseResult* p, void* user_data)
+{
+  (void)user_data;
+  return p->ast->uint == 0xffffaa55;
+}
+
 IX_INITIALIZER(_pp_init_parser)
 {
 #ifndef NDEBUG
@@ -63,15 +78,45 @@ IX_INITIALIZER(_pp_init_parser)
   assert(!inited);
   inited = 1;
 #endif
-  H_VRULE(type, h_bits(4, false));
-  H_VRULE(flags_dropped, h_bits(4, false));
-  H_VRULE(flags_ndropped, h_bits(4, false));
-  H_RULE(dropped_samples, h_uint16());
-  H_RULE(dropped, h_choice(h_sequence(flags_dropped, dropped_samples, NULL),
-                           flags_ndropped,
-                           NULL));
+  H_RULE(nibble, h_bits(4, false));
+  H_VRULE(type_eeg, nibble);
+  H_VRULE(type_drl_ref, nibble);
+  H_VRULE(type_battery, nibble);
+  H_VRULE(type_error, nibble);
 
-  H_RULE(packet, h_sequence(type, dropped, NULL));
+  H_VRULE(flags_dropped, nibble);
+  H_VRULE(flags_ndropped, nibble);
+  H_RULE(dropped_samples, h_uint16());
+  H_RULE(dropped,
+         h_choice(h_sequence(flags_dropped, dropped_samples, NULL),
+                  flags_ndropped,
+                  NULL));
+
+  H_RULE(sample, h_bits(10, false));
+
+  /* TODO(soon): configurable number of EEG channels */
+  H_RULE(packet_eeg,
+         h_sequence(type_eeg, dropped, h_repeat_n(sample, 4), NULL));
+  /* TODO(soon): compressed EEG */
+
+  H_RULE(packet_drl_ref,
+         h_sequence(type_drl_ref, flags_ndropped, h_repeat_n(sample, 2),
+                    NULL));
+  H_RULE(packet_battery,
+         h_sequence(type_battery, flags_ndropped, h_repeat_n(h_uint16(), 4),
+                    NULL));
+  H_RULE(packet_error,
+         h_sequence(type_error, flags_ndropped, h_uint32(), NULL));
+  H_VRULE(packet_sync,
+          h_with_endianness(BYTE_BIG_ENDIAN | BIT_BIG_ENDIAN, h_uint32()));
+
+  H_RULE(packet,
+         h_choice(packet_eeg,
+                  packet_drl_ref,
+                  packet_battery,
+                  packet_error,
+                  packet_sync,
+                  NULL));
   parser = packet;
 }
 
