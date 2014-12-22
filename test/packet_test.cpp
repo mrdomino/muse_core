@@ -15,7 +15,7 @@ extern "C" {
 
 namespace {
 
-TEST(PacketTest, ParsesDroppedSampleFlag) {
+TEST(PacketTest, DISABLED_ParsesDroppedSampleFlag) {
   uint8_t buf[80];
   size_t  n;
   buf[0] = 0xf8;
