@@ -1,6 +1,7 @@
 /* Copyright 2014 InteraXon, Inc. */
 
 /*
+ * include <assert.h> to use the getter macros
  * include <stddef.h> for size_t
  * include <stdint.h> for sized ints
  * include "defs.h" for SO_EXPORT
@@ -24,7 +25,7 @@ typedef enum {
 
 typedef struct {
   uint8_t n;
-  uint16_t data[4];
+  uint16_t data[4];   /* Be mindful of this when adding new packet types! */
 } ix_samples_n;
 
 
