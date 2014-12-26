@@ -14,8 +14,14 @@
 
 
 enum {
-  TT_ix_packet = TT_USER
+  TT_ix_packet = TT_USER,
+  TT_samples_n,
 };
+
+typedef struct {
+  uint8_t n;
+  uint16_t samples[];
+} samples_n;
 
 
 static HParser *parser;
@@ -61,24 +67,51 @@ validate_packet_sync(HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_packet_acc(const HParseResult* p, void* user_data)
+act_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
+              void* user_data)
 {
-  HParsedToken **fields, **channels;
-  ix_packet *pac;
+  samples_n *out;
+  uint8_t   i;
 
   IX_UNUSED(user_data);
 
-  /* TODO(soon): clean up and use glue.h macros */
-  assert(p->ast->seq->used >= 3);
-  fields = h_seq_elements(p->ast);
-  assert(fields[2]->seq->used == 3);
-  channels = h_seq_elements(fields[2]);
+  out = h_arena_malloc(p->arena, sizeof(samples_n) + n * sizeof(uint16_t));
+  out->n = n;
+  for (i = 0; i < n; i++) {
+    out->samples[i] = H_CAST_UINT(sam[i]);
+  }
+  return H_MAKE(samples_n, out);
+}
+
+static HParsedToken*
+act_samples_acc(const HParseResult* p, void* user_data)
+{
+  return act_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
+                       user_data);
+}
+
+static HParsedToken*
+act_samples_eeg4(const HParseResult* p, void* user_data)
+{
+  return act_samples_n(p, h_seq_elements(p->ast), 4, user_data);
+}
+
+static HParsedToken*
+act_packet_acc(const HParseResult* p, void* user_data)
+{
+  ix_packet *pac;
+  samples_n *sam;
+
+  IX_UNUSED(user_data);
+
+  sam = H_CAST(samples_n, h_seq_index(p->ast, 2));
+  assert(sam->n == 3);
 
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_ACCELEROMETER;
-  pac->acc.ch1 = H_CAST_UINT(channels[0]);
-  pac->acc.ch2 = H_CAST_UINT(channels[1]);
-  pac->acc.ch3 = H_CAST_UINT(channels[2]);
+  pac->acc.ch1 = sam->samples[0];
+  pac->acc.ch2 = sam->samples[1];
+  pac->acc.ch3 = sam->samples[2];
 
   return H_MAKE(ix_packet, pac);
 }
@@ -86,22 +119,20 @@ act_packet_acc(const HParseResult* p, void* user_data)
 static HParsedToken*
 act_packet_eeg4(const HParseResult* p, void* user_data)
 {
-  HParsedToken **fields, **channels;
   ix_packet *pac;
+  samples_n *sam;
 
   IX_UNUSED(user_data);
 
-  assert(p->ast->seq->used >= 3);
-  fields = h_seq_elements(p->ast);
-  assert(fields[2]->seq->used == 4);
-  channels = h_seq_elements(fields[2]);
+  sam = H_CAST(samples_n, h_seq_index(p->ast, 2));
+  assert(sam->n == 4);
 
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_UNCOMPRESSED_EEG;
-  pac->eeg.ch1 = H_CAST_UINT(channels[0]);
-  pac->eeg.ch2 = H_CAST_UINT(channels[1]);
-  pac->eeg.ch3 = H_CAST_UINT(channels[2]);
-  pac->eeg.ch4 = H_CAST_UINT(channels[3]);
+  pac->eeg.ch1 = sam->samples[0];
+  pac->eeg.ch2 = sam->samples[1];
+  pac->eeg.ch3 = sam->samples[2];
+  pac->eeg.ch4 = sam->samples[3];
 
   return H_MAKE(ix_packet, pac);
 }
@@ -135,16 +166,15 @@ IX_INITIALIZER(_pp_init_parser)
                   flags_ndropped,
                   NULL));
 
-  H_ARULE(packet_acc,
-          h_sequence(type_acc,
-                     flags,
-                     h_repeat_n(sample, 3),
-                     h_ignore(h_bits(2, false)),
-                     NULL));
+  H_ARULE(samples_acc,
+          h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
+  H_ARULE(samples_eeg4, h_repeat_n(sample, 4));
+
+  H_ARULE(packet_acc, h_sequence(type_acc, flags, samples_acc, NULL));
 
   /* TODO(soon): configurable number of EEG channels */
-  H_ARULE(packet_eeg4,
-          h_sequence(type_eeg, flags, h_repeat_n(sample, 4), NULL));
+  H_ARULE(packet_eeg4, h_sequence(type_eeg, flags, samples_eeg4, NULL));
+
   /* TODO(soon): compressed EEG */
 
   H_RULE(packet_drl_ref,
