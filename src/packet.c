@@ -83,6 +83,29 @@ act_packet_acc(const HParseResult* p, void* user_data)
   return H_MAKE(ix_packet, pac);
 }
 
+static HParsedToken*
+act_packet_eeg4(const HParseResult* p, void* user_data)
+{
+  HParsedToken **fields, **channels;
+  ix_packet *pac;
+
+  IX_UNUSED(user_data);
+
+  assert(p->ast->seq->used >= 3);
+  fields = h_seq_elements(p->ast);
+  assert(fields[2]->seq->used == 4);
+  channels = h_seq_elements(fields[2]);
+
+  pac = H_ALLOC(ix_packet);
+  pac->type = IX_PAC_UNCOMPRESSED_EEG;
+  pac->eeg.ch1 = H_CAST_UINT(channels[0]);
+  pac->eeg.ch2 = H_CAST_UINT(channels[1]);
+  pac->eeg.ch3 = H_CAST_UINT(channels[2]);
+  pac->eeg.ch4 = H_CAST_UINT(channels[3]);
+
+  return H_MAKE(ix_packet, pac);
+}
+
 IX_INITIALIZER(_pp_init_parser)
 {
 #ifndef NDEBUG
@@ -120,8 +143,8 @@ IX_INITIALIZER(_pp_init_parser)
                      NULL));
 
   /* TODO(soon): configurable number of EEG channels */
-  H_RULE(packet_eeg4,
-         h_sequence(type_eeg, flags, h_repeat_n(sample, 4), NULL));
+  H_ARULE(packet_eeg4,
+          h_sequence(type_eeg, flags, h_repeat_n(sample, 4), NULL));
   /* TODO(soon): compressed EEG */
 
   H_RULE(packet_drl_ref,
