@@ -13,3 +13,5 @@
 #   define SO_EXPORT
 # endif
 #endif
+
+#define IX_UNUSED(x) ((void)x)
