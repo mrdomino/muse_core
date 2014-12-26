@@ -15,14 +15,8 @@
 
 enum {
   TT_ix_packet = TT_USER,
-  TT_samples_n,
+  TT_ix_samples_n,
 };
-
-typedef struct {
-  uint8_t n;
-  uint16_t samples[];
-} samples_n;
-
 
 static HParser *parser;
 
@@ -67,52 +61,47 @@ validate_packet_sync(HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
-              void* user_data)
+act_ix_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
+                 void* user_data)
 {
-  samples_n *out;
-  uint8_t   i;
+  ix_samples_n *out;
+  uint8_t      i;
 
   IX_UNUSED(user_data);
 
-  out = h_arena_malloc(p->arena, sizeof(samples_n) + n * sizeof(uint16_t));
+  out = H_ALLOC(ix_samples_n);
   out->n = n;
   for (i = 0; i < n; i++) {
-    out->samples[i] = H_CAST_UINT(sam[i]);
+    out->data[i] = H_CAST_UINT(sam[i]);
   }
-  return H_MAKE(samples_n, out);
+  return H_MAKE(ix_samples_n, out);
 }
 
 static HParsedToken*
 act_samples_acc(const HParseResult* p, void* user_data)
 {
-  return act_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
+  return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
                        user_data);
 }
 
 static HParsedToken*
 act_samples_eeg4(const HParseResult* p, void* user_data)
 {
-  return act_samples_n(p, h_seq_elements(p->ast), 4, user_data);
+  return act_ix_samples_n(p, h_seq_elements(p->ast), 4, user_data);
 }
 
 static HParsedToken*
 act_packet_acc(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
-  samples_n *sam;
+  ix_samples_n *sam;
 
   IX_UNUSED(user_data);
 
-  sam = H_CAST(samples_n, h_seq_index(p->ast, 2));
-  assert(sam->n == 3);
-
+  sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_ACCELEROMETER;
-  pac->acc.ch1 = sam->samples[0];
-  pac->acc.ch2 = sam->samples[1];
-  pac->acc.ch3 = sam->samples[2];
-
+  pac->samples = *sam;
   return H_MAKE(ix_packet, pac);
 }
 
@@ -120,20 +109,14 @@ static HParsedToken*
 act_packet_eeg4(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
-  samples_n *sam;
+  ix_samples_n *sam;
 
   IX_UNUSED(user_data);
 
-  sam = H_CAST(samples_n, h_seq_index(p->ast, 2));
-  assert(sam->n == 4);
-
+  sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_UNCOMPRESSED_EEG;
-  pac->eeg.ch1 = sam->samples[0];
-  pac->eeg.ch2 = sam->samples[1];
-  pac->eeg.ch3 = sam->samples[2];
-  pac->eeg.ch4 = sam->samples[3];
-
+  pac->samples = *sam;
   return H_MAKE(ix_packet, pac);
 }
 

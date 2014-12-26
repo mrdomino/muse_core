@@ -22,31 +22,13 @@ typedef enum {
   IX_PAC_DRLREF
 } ix_pac_type;
 
-/* TODO(soon): decide whether to make these opaque and provide an allocator */
+typedef struct {
+  uint8_t n;
+  uint16_t data[4];
+} ix_samples_n;
 
-/*
- * Accelerometer channels.
- *
- * Unstable -- may change between releases.
- */
-struct _pac_accelerometer {
-  uint16_t ch1;
-  uint16_t ch2;
-  uint16_t ch3;
-};
 
-/*
- * EEG channels.
- *
- * Unstable -- may change between releases.
- */
-struct _pac_eeg4 {
-  uint16_t ch1;
-  uint16_t ch2;
-  uint16_t ch3;
-  uint16_t ch4;
-};
-
+/* TODO(soon): decide whether to make this opaque and provide an allocator */
 /*
  * Structure covering all packet types.
  *
@@ -54,10 +36,7 @@ struct _pac_eeg4 {
  */
 typedef struct {
   ix_pac_type type;
-  union {
-    struct _pac_accelerometer acc;
-    struct _pac_eeg4          eeg;
-  };
+  ix_samples_n samples;
 } ix_packet;
 
 
@@ -72,16 +51,22 @@ typedef struct {
  * ix_packet changes.
  */
 #define ix_packet_type(p) (p)->type
-#define ix_assert(t, p, f) (assert(ix_packet_type(p) == (t)), f)
-#define ix_packet_acc(p) ix_assert(IX_PAC_ACCELEROMETER, p, (p)->acc)
-#define ix_packet_acc_ch1(p) ix_packet_acc(p).ch1
-#define ix_packet_acc_ch2(p) ix_packet_acc(p).ch2
-#define ix_packet_acc_ch3(p) ix_packet_acc(p).ch3
-#define ix_packet_eeg(p) ix_assert(IX_PAC_UNCOMPRESSED_EEG, p, (p)->eeg)
-#define ix_packet_eeg_ch1(p) ix_packet_eeg(p).ch1
-#define ix_packet_eeg_ch2(p) ix_packet_eeg(p).ch2
-#define ix_packet_eeg_ch3(p) ix_packet_eeg(p).ch3
-#define ix_packet_eeg_ch4(p) ix_packet_eeg(p).ch4
+
+#define ix_assert(pred, p) (assert(pred), p)
+#define ix_packet_ch_i(p, i) \
+  ix_assert((p)->samples.n > i, (p)->samples.data[i])
+#define ix_packet_acc(p) ix_assert((p)->type == IX_PAC_ACCELEROMETER, p)
+
+#define ix_packet_acc_ch1(p) ix_packet_ch_i(ix_packet_acc(p), 0)
+#define ix_packet_acc_ch2(p) ix_packet_ch_i(ix_packet_acc(p), 1)
+#define ix_packet_acc_ch3(p) ix_packet_ch_i(ix_packet_acc(p), 2)
+
+#define ix_packet_eeg(p) ix_assert((p)->type == IX_PAC_UNCOMPRESSED_EEG, p)
+
+#define ix_packet_eeg_ch1(p) ix_packet_ch_i(ix_packet_eeg(p), 0)
+#define ix_packet_eeg_ch2(p) ix_packet_ch_i(ix_packet_eeg(p), 1)
+#define ix_packet_eeg_ch3(p) ix_packet_ch_i(ix_packet_eeg(p), 2)
+#define ix_packet_eeg_ch4(p) ix_packet_ch_i(ix_packet_eeg(p), 3)
 
 /*
  * Parse a packet from a buffer.
