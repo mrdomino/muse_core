@@ -15,9 +15,6 @@ using std::make_pair;
 using std::pair;
 using std::string;
 
-// TODO(soon): test cases for all packet types + failures
-// TODO(soon): + a helper to produce arbitrary packet-like things
-
 namespace {
 
 inline string sync_packet() {
@@ -129,5 +126,23 @@ TEST(PacketTest, ParsesEeg) {
   EXPECT_EQ(maxval, ix_packet_eeg_ch3(p));
   EXPECT_EQ(maxval, ix_packet_eeg_ch4(p));
 }
+
+TEST(PacketTest, ParseMultiplePackets) {
+  auto buf = sync_packet() + acc_packet(0, 0, 0) + eeg_packet(511, 512, 53, 400)
+                           + acc_packet(737, 20, 3)
+                           + eeg_packet(1023, 1022, 1021, 1000)
+                           + sync_packet();
+  auto begin = buf.cbegin();
+  auto end = buf.cend();
+  while (begin != end) {
+    auto r = test_parse(string(begin, end));
+    begin += r.first;
+  }
+  EXPECT_EQ(end, begin);
+}
+
+// TODO(soon): drl_ref, battery, error, compressed eeg
+// TODO(soon): dropped samples
+// TODO(soon): NEED MORE vs BAD STR
 
 }  // namespace

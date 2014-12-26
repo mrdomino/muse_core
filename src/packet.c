@@ -21,7 +21,6 @@ enum {
 static HParser *parser;
 
 
-// TODO(soon): finish the packet parser
 #define VALIDATE_TYPE(x, n)                             \
   static bool                                           \
   validate_type_ ##x(HParseResult* p, void* user_data)  \
@@ -81,7 +80,7 @@ static HParsedToken*
 act_samples_acc(const HParseResult* p, void* user_data)
 {
   return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
-                       user_data);
+                          user_data);
 }
 
 static HParsedToken*
