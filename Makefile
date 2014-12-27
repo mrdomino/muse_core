@@ -27,8 +27,8 @@ DESTDIR = dist
 LIBDIR = $(DESTDIR)$(PREFIX)/lib
 INCDIR = $(DESTDIR)$(PREFIX)/include
 
-INCS = -I$(INCDIR) -I$(BUILDINCDIR)
-LIBS = -L$(LIBDIR) -L$(BUILDLIBDIR) -lhammer
+INCS = $(_I)$(INCDIR) $(_I)$(BUILDINCDIR)
+LIBS = $(_L)$(LIBDIR) $(_L)$(BUILDLIBDIR) -lhammer
 
 CFLAGS += $(INCS)
 CXXFLAGS += $(INCS)
@@ -45,8 +45,8 @@ MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(MUSE_CORE_INCDIR)/$(inc).h)
 MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 
-MUSE_CORE_S = $(LIBDIR)/libmuse_core.$S
-MUSE_CORE_A = $(LIBDIR)/libmuse_core.$A
+MUSE_CORE_S = $(LIBDIR)/$(LIB)muse_core.$S
+MUSE_CORE_A = $(LIBDIR)/$(LIB)muse_core.$A
 
 all: options dirs deps copy-headers lib
 
@@ -117,8 +117,8 @@ ifeq (,$(SKIP_TESTS))
 
 GTEST_SRC = 3rdparty/gtest
 CXXFLAGS += -I$(GTEST_SRC) -I$(GTEST_SRC)/include
-GTEST_A = $(BUILDLIBDIR)/libgtest.$A
-GTEST_MAIN_A = $(BUILDLIBDIR)/libgtest_main.$A
+GTEST_A = $(BUILDLIBDIR)/$(LIB)gtest.$A
+GTEST_MAIN_A = $(BUILDLIBDIR)/$(LIB)gtest_main.$A
 
 all: test
 
@@ -158,7 +158,7 @@ endif
 ################################################################################
 ifneq (,$(USE_BUNDLED_HAMMER))
 
-HAMMER_A = $(BUILDLIBDIR)/libhammer.$A
+HAMMER_A = $(BUILDLIBDIR)/$(LIB)hammer.$A
 HAMMER_H = $(BUILDINCDIR)/hammer/glue.h $(BUILDINCDIR)/hammer/hammer.h
 
 deps: $(HAMMER_A) $(HAMMER_H)
