@@ -122,6 +122,8 @@ GTEST_MAIN_A = $(BUILDLIBDIR)/$(LIB)gtest_main.$A
 
 all: test
 
+.PHONY: test
+
 test: unittests
 	@echo unittests
 	@./unittests
