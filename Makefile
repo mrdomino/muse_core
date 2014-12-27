@@ -45,6 +45,7 @@ MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(MUSE_CORE_INCDIR)/$(inc).h)
 MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 
+# TODO(soon): build into builddir, make install copy to destdir
 MUSE_CORE_S = $(LIBDIR)/$(LIB)muse_core.$S
 MUSE_CORE_A = $(LIBDIR)/$(LIB)muse_core.$A
 
@@ -107,7 +108,10 @@ distclean: clean
 	git clean -xdf
 	git submodule foreach git clean -xdf
 
-.PHONY: all clean copy-headers default deps dirs distclean lib options
+install:
+	make dirs copy-headers lib DESTDIR=
+
+.PHONY: all clean copy-headers default deps dirs distclean install lib options
 
 
 ################################################################################
