@@ -45,8 +45,8 @@ MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(MUSE_CORE_INCDIR)/$(inc).h)
 MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 
-LIBMUSE_CORE_S = $(LIBDIR)/libmuse_core.$S
-LIBMUSE_CORE_A = $(LIBDIR)/libmuse_core.$A
+MUSE_CORE_S = $(LIBDIR)/libmuse_core.$S
+MUSE_CORE_A = $(LIBDIR)/libmuse_core.$A
 
 all: options dirs deps copy-headers lib
 
@@ -74,18 +74,18 @@ $(DIRS):
 	@echo mkdir $@
 	@mkdir -p $@
 
-lib: $(LIBMUSE_CORE_S) $(LIBMUSE_CORE_A)
+lib: $(MUSE_CORE_S) $(MUSE_CORE_A)
 
 copy-headers: $(MUSE_CORE_H)
 
-$(LIBMUSE_CORE_S): $(MUSE_CORE_S_O)
-	@echo ld $(LIBMUSE_CORE_S)
-	@$(LD) -shared -o $(LIBMUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S_O) \
+$(MUSE_CORE_S): $(MUSE_CORE_S_O)
+	@echo ld $(MUSE_CORE_S)
+	@$(LD) -shared -o $(MUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S_O) \
 	  $(LDFLAGS)
 
-$(LIBMUSE_CORE_A): $(MUSE_CORE_A_O)
-	@echo ar $(LIBMUSE_CORE_A)
-	@ar rcs $(LIBMUSE_CORE_A) $(MUSE_CORE_A_O)
+$(MUSE_CORE_A): $(MUSE_CORE_A_O)
+	@echo ar $(MUSE_CORE_A)
+	@ar rcs $(MUSE_CORE_A) $(MUSE_CORE_A_O)
 
 $(MUSE_CORE_INCDIR)/%.h: $(SRCDIR)/%.h
 	@echo copying $@
@@ -135,7 +135,7 @@ $(BUILDDIR_A)/test/%.o: test/%.cpp
 	@echo c++ $@
 	@$(CXX) -c -o $@ $(CXXFLAGS) $<
 
-unittests: $(LIBMUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
+unittests: $(MUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
            $(GTEST_MAIN_A) $(HAMMER_A)
 	@echo c++ld $@
 	@$(CXXLD) -o unittests \
