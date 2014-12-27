@@ -1,5 +1,7 @@
 /* Copyright 2014 InteraXon, Inc. */
 
+#define IX_UNUSED(x) ((void)x)
+
 #if defined _MSC_VER
 
 #define IX_CCALL __cdecl

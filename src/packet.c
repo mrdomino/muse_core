@@ -5,7 +5,7 @@
 #include "packet.h"
 
 #include "r.h"
-#include "initializer.h"
+#include "defs_internal.h"
 
 #include <assert.h>
 #include <hammer/glue.h>

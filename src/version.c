@@ -11,7 +11,7 @@
 #include "result.h"
 #include "version.h"
 #include "r.h"
-#include "initializer.h"
+#include "defs_internal.h"
 
 
 static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
