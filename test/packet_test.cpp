@@ -170,13 +170,26 @@ TEST(PacketTest, ParseMultiplePackets) {
                            + acc_packet(737, 20, 3)
                            + eeg_packet(1023, 1022, 1021, 1000)
                            + sync_packet();
+  auto pacs = std::vector<IxPacket>();
   auto begin = buf.cbegin();
   auto end = buf.cend();
   while (begin != end) {
     auto r = test_parse(string(begin, end));
+    auto v = r.second;
+    pacs.insert(pacs.end(), v.begin(), v.end());
     begin += r.first;
   }
   EXPECT_EQ(end, begin);
+
+  ASSERT_EQ(6u, pacs.size());
+
+  EXPECT_EQ(IX_PAC_SYNC, pacs[0].type);
+  EXPECT_EQ(IX_PAC_EEG, pacs[2].type);
+  EXPECT_EQ(53u, pacs[2].samples[2]);
+  EXPECT_EQ(IX_PAC_ACCELEROMETER, pacs[3].type);
+  EXPECT_EQ(737u, pacs[3].samples[0]);
+  EXPECT_EQ(1022u, pacs[4].samples[1]);
+  EXPECT_EQ(IX_PAC_SYNC, pacs[5].type);
 }
 
 // TODO(soon): drl_ref, battery, error, compressed eeg
