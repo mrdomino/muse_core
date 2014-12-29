@@ -13,9 +13,13 @@ extern "C" {
 #include <type_traits>
 #include <utility>
 
+using std::enable_if;
+using std::exception;
+using std::forward;
 using std::make_pair;
 using std::pair;
 using std::string;
+using std::vector;
 
 namespace {
 
@@ -57,17 +61,17 @@ inline string acc_packet(uint16_t dropped, Args&&... args) {
   prefix[2] = dropped >> 8;
 
   for (auto b : prefix) { ret.push_back(b); }
-  return ret + acc_samples(std::forward<Args>(args)...);
+  return ret + acc_samples(forward<Args>(args)...);
 }
 
 template <typename... Args,
-          typename std::enable_if<sizeof...(Args) == 3>::type* = nullptr>
+          typename enable_if<sizeof...(Args) == 3>::type* = nullptr>
 inline string acc_packet(Args&&... args) {
   uint8_t b = 0xa << 4;
   string ret;
 
   ret.push_back(b);
-  return ret + acc_samples(std::forward<Args>(args)...);
+  return ret + acc_samples(forward<Args>(args)...);
 }
 
 inline string eeg_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
@@ -100,17 +104,17 @@ inline string eeg_packet(uint16_t dropped, Args&&... args) {
   prefix[1] = dropped & 0xff;
   prefix[2] = dropped >> 8;
   for (auto b : prefix) { ret.push_back(b); }
-  return ret + eeg_samples(std::forward<Args>(args)...);
+  return ret + eeg_samples(forward<Args>(args)...);
 }
 
 template <typename... Args,
-          typename std::enable_if<sizeof...(Args) == 4>::type* = nullptr>
+          typename enable_if<sizeof...(Args) == 4>::type* = nullptr>
 inline string eeg_packet(Args&&... args) {
   uint8_t b = 0xe << 4;
   string ret;
 
   ret.push_back(b);
-  return ret + eeg_samples(std::forward<Args>(args)...);
+  return ret + eeg_samples(forward<Args>(args)...);
 }
 
 constexpr bool has_dropped_samples(ix_pac_type t) {
@@ -140,15 +144,15 @@ struct IxPacket {
 
   ix_pac_type type;
   uint16_t dropped_samples;
-  std::vector<uint16_t> samples;
+  vector<uint16_t> samples;
 };
 
-struct PacketParseError : ::std::exception {};
+struct PacketParseError : ::exception {};
 
-pair<uint32_t, std::vector<IxPacket>> test_parse(string const& buf) {
-  auto pacs = std::vector<IxPacket>();
+pair<uint32_t, vector<IxPacket>> test_parse(string const& buf) {
+  auto pacs = vector<IxPacket>();
   ix_packet_fn pac_f = [](const ix_packet* p, void* user_data) {
-    auto pacs = static_cast<std::vector<IxPacket>*>(user_data);
+    auto pacs = static_cast<vector<IxPacket>*>(user_data);
     pacs->push_back(IxPacket(p));
   };
   auto r = ix_packet_parse((uint8_t*)buf.c_str(), buf.size(), pac_f, &pacs);
@@ -214,7 +218,7 @@ TEST(PacketTest, ParseMultiplePackets) {
                            + acc_packet(737, 20, 3)
                            + eeg_packet(1023, 1022, 1021, 1000)
                            + sync_packet();
-  auto pacs = std::vector<IxPacket>();
+  auto pacs = vector<IxPacket>();
   auto begin = buf.cbegin();
   auto end = buf.cend();
   while (begin != end) {
