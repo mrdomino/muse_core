@@ -69,7 +69,31 @@ inline string eeg_packet(uint16_t ch1, uint16_t ch2, uint16_t ch3,
   return ret;
 }
 
+constexpr bool has_dropped_samples(ix_pac_type t) {
+  return t == IX_PAC_EEG || t == IX_PAC_ACCELEROMETER;
+}
+
 struct IxPacket {
+  IxPacket(const ix_packet* p):
+    type(ix_packet_type(p)),
+    dropped_samples(has_dropped_samples(type)?
+                    ix_packet_dropped_samples(p) : 0)
+  {
+    if (type == IX_PAC_ACCELEROMETER) {
+      samples.reserve(3);
+      samples.push_back(ix_packet_acc_ch1(p));
+      samples.push_back(ix_packet_acc_ch2(p));
+      samples.push_back(ix_packet_acc_ch3(p));
+    }
+    else if (type == IX_PAC_EEG) {
+      samples.reserve(4);
+      samples.push_back(ix_packet_eeg_ch1(p));
+      samples.push_back(ix_packet_eeg_ch2(p));
+      samples.push_back(ix_packet_eeg_ch3(p));
+      samples.push_back(ix_packet_eeg_ch4(p));
+    }
+  }
+
   ix_pac_type type;
   uint16_t dropped_samples;
   std::vector<uint16_t> samples;
@@ -81,25 +105,7 @@ pair<uint32_t, std::vector<IxPacket>> test_parse(string const& buf) {
   auto pacs = std::vector<IxPacket>();
   ix_packet_fn pac_f = [](const ix_packet* p, void* user_data) {
     auto pacs = static_cast<std::vector<IxPacket>*>(user_data);
-    IxPacket q;
-    q.type = ix_packet_type(p);
-    if (q.type == IX_PAC_ACCELEROMETER) {
-      q.samples.reserve(3);
-      q.samples.push_back(ix_packet_acc_ch1(p));
-      q.samples.push_back(ix_packet_acc_ch2(p));
-      q.samples.push_back(ix_packet_acc_ch3(p));
-    }
-    else if (q.type == IX_PAC_EEG) {
-      q.samples.reserve(4);
-      q.samples.push_back(ix_packet_eeg_ch1(p));
-      q.samples.push_back(ix_packet_eeg_ch2(p));
-      q.samples.push_back(ix_packet_eeg_ch3(p));
-      q.samples.push_back(ix_packet_eeg_ch4(p));
-    }
-    if (q.type == IX_PAC_ACCELEROMETER || q.type == IX_PAC_EEG) {
-      q.dropped_samples = ix_packet_dropped_samples(p);
-    }
-    pacs->push_back(q);
+    pacs->push_back(IxPacket(p));
   };
   auto r = ix_packet_parse((uint8_t*)buf.c_str(), buf.size(), pac_f, &pacs);
   if (r.err == IX_OK) {
