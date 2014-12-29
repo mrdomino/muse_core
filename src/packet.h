@@ -10,12 +10,9 @@
 
 /*
  * Possible packet types.
- *
- * Stable -- none of the existing values are expected to change.
  */
 typedef enum {
   IX_PAC_SYNC = 1,
-  IX_PAC_UNCOMPRESSED_EEG,
   IX_PAC_ERROR,
   IX_PAC_EEG,
   IX_PAC_BATTERY,
@@ -23,59 +20,65 @@ typedef enum {
   IX_PAC_DRLREF
 } ix_pac_type;
 
-typedef struct {
-  uint8_t n;
-  uint16_t data[4];   /* Be mindful of this when adding new packet types! */
-} ix_samples_n;
 
-
-/* TODO(soon): decide whether to make this opaque and provide an allocator */
 /*
- * Structure covering all packet types.
- *
- * Unstable -- may change between releases.
+ * Generic packet structure.
  */
-typedef struct {
-  ix_pac_type type;
-  ix_samples_n samples;
-} ix_packet;
+typedef struct _ix_packet ix_packet;
+
+/*
+ * Packet callback function type.
+ */
+typedef void (*ix_packet_fn)(const ix_packet* p, void* user_data);
 
 
 /*
- * Getter macros for packet fields.
- *
- * These assert the appropriate packet type, and should not be called on
- * packets of unknown or incorrect type.
- *
- * Code that refers to these symbols, and not directly to ix_packet fields,
- * should not need to be modified -- only recompiled -- if the layout of
- * ix_packet changes.
+ * Return the type of the passed packet.
  */
-#define ix_packet_type(p) (p)->type
+SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
 
-#define ix_assert(pred, p) (assert(pred), p)
-#define ix_packet_ch_i(p, i) \
-  ix_assert((p)->samples.n > i, (p)->samples.data[i])
-#define ix_packet_acc(p) ix_assert((p)->type == IX_PAC_ACCELEROMETER, p)
+/*
+ * Accelerometer type-specific accessors.
+ *
+ * These assert that ix_packet_type(p) == IX_PAC_ACCELEROMETER. It is an error
+ * to call them on any other packet type.
+ */
+SO_EXPORT uint16_t ix_packet_acc_ch1(const ix_packet* p);
+SO_EXPORT uint16_t ix_packet_acc_ch2(const ix_packet* p);
+SO_EXPORT uint16_t ix_packet_acc_ch3(const ix_packet* p);
 
-#define ix_packet_acc_ch1(p) ix_packet_ch_i(ix_packet_acc(p), 0)
-#define ix_packet_acc_ch2(p) ix_packet_ch_i(ix_packet_acc(p), 1)
-#define ix_packet_acc_ch3(p) ix_packet_ch_i(ix_packet_acc(p), 2)
+/*
+ * EEG type-specific accessors.
+ *
+ * These assert that ix_packet_type(p) == IX_PAC_EEG. It is an error to call
+ * them on any other packet type.
+ */
+SO_EXPORT uint16_t ix_packet_eeg_ch1(const ix_packet* p);
+SO_EXPORT uint16_t ix_packet_eeg_ch2(const ix_packet* p);
+SO_EXPORT uint16_t ix_packet_eeg_ch3(const ix_packet* p);
+SO_EXPORT uint16_t ix_packet_eeg_ch4(const ix_packet* p);
 
-#define ix_packet_eeg(p) ix_assert((p)->type == IX_PAC_UNCOMPRESSED_EEG, p)
-
-#define ix_packet_eeg_ch1(p) ix_packet_ch_i(ix_packet_eeg(p), 0)
-#define ix_packet_eeg_ch2(p) ix_packet_ch_i(ix_packet_eeg(p), 1)
-#define ix_packet_eeg_ch3(p) ix_packet_ch_i(ix_packet_eeg(p), 2)
-#define ix_packet_eeg_ch4(p) ix_packet_ch_i(ix_packet_eeg(p), 3)
+/*
+ * Return the dropped samples value for this packet.
+ *
+ * This is the direct value sent with the specific packet in question -- in
+ * other words, the number of dropped samples since the last successful packet
+ * of the same type.
+ *
+ * This asserts that the packet is of a type that sends information on dropped
+ * samples -- at this time, IX_PAC_ACCELEROMETER and IX_PAC_EEG. It is an error
+ * to call it on any other packet type.
+ */
+SO_EXPORT uint16_t ix_packet_dropped_samples(const ix_packet* p);
 
 /*
  * Parse a packet from a buffer.
  *
  * Returns err == IX_OK, res.uin == offset of first unparsed byte on successful
- * parse. Parsed packets are returned via pac. If err != IX_OK, res is
- * undefined and pac is not modified.
+ * parse. Calls pac_f once per packet parsed with the packet and the supplied
+ * user_data.
  */
 SO_EXPORT
 ix_result
-ix_packet_parse(const uint8_t* buf, size_t len, ix_packet* pac);
+ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
+                void* user_data);

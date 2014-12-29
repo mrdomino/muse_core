@@ -7,6 +7,7 @@ extern "C" {
 #include <muse_core/packet.h>
 }
 
+#include <exception>
 #include <gtest/gtest.h>
 #include <string>
 #include <utility>
@@ -68,14 +69,44 @@ inline string eeg_packet(uint16_t ch1, uint16_t ch2, uint16_t ch3,
   return ret;
 }
 
-pair<uint32_t, ix_packet> test_parse(string const& buf) {
-  ix_packet p;
-  auto r = ix_packet_parse((uint8_t*)buf.c_str(), buf.size(), &p);
+struct IxPacket {
+  ix_pac_type type;
+  uint16_t dropped_samples;
+  std::vector<uint16_t> samples;
+};
+
+struct PacketParseError : ::std::exception {};
+
+pair<uint32_t, std::vector<IxPacket>> test_parse(string const& buf) {
+  auto pacs = std::vector<IxPacket>();
+  ix_packet_fn pac_f = [](const ix_packet* p, void* user_data) {
+    auto pacs = static_cast<std::vector<IxPacket>*>(user_data);
+    IxPacket q;
+    q.type = ix_packet_type(p);
+    if (q.type == IX_PAC_ACCELEROMETER) {
+      q.samples.reserve(3);
+      q.samples.push_back(ix_packet_acc_ch1(p));
+      q.samples.push_back(ix_packet_acc_ch2(p));
+      q.samples.push_back(ix_packet_acc_ch3(p));
+    }
+    else if (q.type == IX_PAC_EEG) {
+      q.samples.reserve(4);
+      q.samples.push_back(ix_packet_eeg_ch1(p));
+      q.samples.push_back(ix_packet_eeg_ch2(p));
+      q.samples.push_back(ix_packet_eeg_ch3(p));
+      q.samples.push_back(ix_packet_eeg_ch4(p));
+    }
+    if (q.type == IX_PAC_ACCELEROMETER || q.type == IX_PAC_EEG) {
+      q.dropped_samples = ix_packet_dropped_samples(p);
+    }
+    pacs->push_back(q);
+  };
+  auto r = ix_packet_parse((uint8_t*)buf.c_str(), buf.size(), pac_f, &pacs);
   if (r.err == IX_OK) {
-    return make_pair(r.res.uin, p);
+    return make_pair(r.res.uin, pacs);
   }
   else {
-    throw "";
+    throw PacketParseError();
   }
 }
 
@@ -86,45 +117,46 @@ TEST(PacketTest, ParseFailures) {
 
 TEST(PacketTest, ParsesSync) {
   auto r = test_parse(sync_packet());
-  EXPECT_EQ(IX_PAC_SYNC, ix_packet_type(&r.second));
+  ASSERT_EQ(1u, r.second.size());
+  EXPECT_EQ(IX_PAC_SYNC, r.second[0].type);
   EXPECT_EQ(4u, r.first);
 }
 
 TEST(PacketTest, ParsesAcc) {
   auto r = test_parse(acc_packet(1u, 2u, 3u));
-  auto p = &r.second;
-  ASSERT_EQ(IX_PAC_ACCELEROMETER, ix_packet_type(p));
-  EXPECT_EQ(1u, ix_packet_acc_ch1(p));
-  EXPECT_EQ(2u, ix_packet_acc_ch2(p));
-  EXPECT_EQ(3u, ix_packet_acc_ch3(p));
+  auto p = r.second.at(0);
+  ASSERT_EQ(IX_PAC_ACCELEROMETER, p.type);
+  EXPECT_EQ(1u, p.samples[0]);
+  EXPECT_EQ(2u, p.samples[1]);
+  EXPECT_EQ(3u, p.samples[2]);
 
   auto maxval = (1u << 10) - 1u;
 
   r = test_parse(acc_packet(maxval, maxval, maxval));
-  p = &r.second;
-  ASSERT_EQ(IX_PAC_ACCELEROMETER, ix_packet_type(p));
-  EXPECT_EQ(maxval, ix_packet_acc_ch1(p));
-  EXPECT_EQ(maxval, ix_packet_acc_ch2(p));
-  EXPECT_EQ(maxval, ix_packet_acc_ch3(p));
+  p = r.second.at(0);
+  ASSERT_EQ(IX_PAC_ACCELEROMETER, p.type);
+  EXPECT_EQ(maxval, p.samples[0]);
+  EXPECT_EQ(maxval, p.samples[1]);
+  EXPECT_EQ(maxval, p.samples[2]);
 }
 
 TEST(PacketTest, ParsesEeg) {
   auto r = test_parse(eeg_packet(1u, 2u, 3u, 4u));
-  auto p = &r.second;
-  ASSERT_EQ(IX_PAC_UNCOMPRESSED_EEG, ix_packet_type(p));
-  EXPECT_EQ(1u, ix_packet_eeg_ch1(p));
-  EXPECT_EQ(2u, ix_packet_eeg_ch2(p));
-  EXPECT_EQ(3u, ix_packet_eeg_ch3(p));
-  EXPECT_EQ(4u, ix_packet_eeg_ch4(p));
+  auto p = r.second.at(0);
+  ASSERT_EQ(IX_PAC_EEG, p.type);
+  EXPECT_EQ(1u, p.samples[0]);
+  EXPECT_EQ(2u, p.samples[1]);
+  EXPECT_EQ(3u, p.samples[2]);
+  EXPECT_EQ(4u, p.samples[3]);
 
   auto maxval = (1u << 10) - 1u;
 
   r = test_parse(eeg_packet(maxval, maxval, maxval, maxval));
-  p = &r.second;
-  EXPECT_EQ(maxval, ix_packet_eeg_ch1(p));
-  EXPECT_EQ(maxval, ix_packet_eeg_ch2(p));
-  EXPECT_EQ(maxval, ix_packet_eeg_ch3(p));
-  EXPECT_EQ(maxval, ix_packet_eeg_ch4(p));
+  p = r.second.at(0);
+  EXPECT_EQ(maxval, p.samples[0]);
+  EXPECT_EQ(maxval, p.samples[1]);
+  EXPECT_EQ(maxval, p.samples[2]);
+  EXPECT_EQ(maxval, p.samples[3]);
 }
 
 TEST(PacketTest, ParseMultiplePackets) {

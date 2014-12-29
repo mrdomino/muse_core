@@ -13,6 +13,17 @@
 #include <string.h>
 
 
+typedef struct {
+    uint16_t n;
+    uint16_t data[4];
+} ix_samples_n;
+
+struct _ix_packet {
+    ix_pac_type  type;
+    uint16_t     dropped_samples;
+    ix_samples_n samples;
+};
+
 enum {
   TT_ix_packet = TT_USER,
   TT_ix_samples_n,
@@ -125,7 +136,7 @@ act_packet_eeg4(const HParseResult* p, void* user_data)
 
   sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_UNCOMPRESSED_EEG;
+  pac->type = IX_PAC_EEG;
   pac->samples = *sam;
   return H_MAKE(ix_packet, pac);
 }
@@ -192,8 +203,48 @@ IX_INITIALIZER(_pp_init_parser)
 }
 
 
+ix_pac_type
+ix_packet_type(const ix_packet* p)
+{ return p->type; }
+
+#define _packet_assert_field(p, t, f) (assert((p)->type == (t)), f)
+#define _packet_typ_field(f, t, n) \
+  uint16_t \
+  ix_packet_ ##f ## _ch ##n(const ix_packet* p) \
+  { return _packet_assert_field(p, t, p->samples.data[n - 1]); } \
+  uint16_t ix_packet_acc_ch ##n(const ix_packet* p)
+
+#define _packet_acc_field(n) _packet_typ_field(acc, IX_PAC_ACCELEROMETER, n)
+
+_packet_acc_field(1);
+_packet_acc_field(2);
+_packet_acc_field(3);
+
+#undef _packet_acc_field
+
+#define _packet_eeg_field(n) _packet_typ_field(eeg, IX_PAC_EEG, n)
+
+_packet_eeg_field(1);
+_packet_eeg_field(2);
+_packet_eeg_field(3);
+_packet_eeg_field(4);
+
+#undef _packet_eeg_field
+#undef _packet_typ_field
+#undef _packet_assert_field
+
+uint16_t
+ix_packet_dropped_samples(const ix_packet* p)
+{
+  assert(p->type == IX_PAC_ACCELEROMETER ||
+         p->type == IX_PAC_EEG);
+  return p->dropped_samples;
+}
+
+
 ix_result
-ix_packet_parse(const uint8_t* buf, size_t len, ix_packet* pac)
+ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
+                void* user_data)
 {
   HParseResult *r = h_parse(parser, buf, len);
   ix_result    ret;
@@ -201,8 +252,8 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet* pac)
   if (r) {
     assert(r->ast->token_type == (HTokenType)TT_ix_packet);
     assert(r->bit_length % 8 == 0);
-    memcpy(pac, r->ast->user, sizeof(ix_packet));
     ret = ix_r_uin(r->bit_length / 8);
+    pac_f((const ix_packet*)r->ast->user, user_data);
     h_parse_result_free(r);
     return ret;
   }
