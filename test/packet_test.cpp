@@ -10,6 +10,7 @@ extern "C" {
 #include <exception>
 #include <gtest/gtest.h>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 using std::make_pair;
@@ -28,29 +29,51 @@ inline string sync_packet() {
   return ret;
 }
 
-inline string acc_packet(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
+inline string acc_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
   string ret;
-  uint8_t vals[5];
+  uint8_t vals[4];
 
   // [11111111]
   // [11222222]
   // [22223333]
   // [333333xx]
 
-  vals[0] = 0xa << 4;
-  vals[1] = ch1 >> 2;
-  vals[2] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
-  vals[3] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
-  vals[4] = (ch3 << 2 & 0xfc);
+  vals[0] = ch1 >> 2;
+  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
+  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
+  vals[3] = (ch3 << 2 & 0xfc);
 
   for (auto b : vals) { ret.push_back(b); }
   return ret;
 }
 
-inline string eeg_packet(uint16_t ch1, uint16_t ch2, uint16_t ch3,
-                         uint16_t ch4) {
+template <typename... Args>
+inline string acc_packet(uint16_t dropped, Args&&... args) {
   string ret;
-  uint8_t vals[6];
+  uint8_t prefix[3];
+
+  prefix[0] = 0xa << 4 | 1 << 3;
+  prefix[1] = dropped & 0xff;
+  prefix[2] = dropped >> 8;
+
+  for (auto b : prefix) { ret.push_back(b); }
+  return ret + acc_samples(std::forward<Args>(args)...);
+}
+
+template <typename... Args,
+          typename std::enable_if<sizeof...(Args) == 3>::type* = nullptr>
+inline string acc_packet(Args&&... args) {
+  uint8_t b = 0xa << 4;
+  string ret;
+
+  ret.push_back(b);
+  return ret + acc_samples(std::forward<Args>(args)...);
+}
+
+inline string eeg_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
+                          uint16_t ch4) {
+  string ret;
+  uint8_t vals[5];
 
   // [11111111]
   // [11222222]
@@ -58,15 +81,36 @@ inline string eeg_packet(uint16_t ch1, uint16_t ch2, uint16_t ch3,
   // [33333344]
   // [44444444]
 
-  vals[0] = 0xe << 4;
-  vals[1] = ch1 >> 2;
-  vals[2] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
-  vals[3] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
-  vals[4] = (ch3 << 2 & 0xfc) | (ch4 >> 8 & 0x03);
-  vals[5] = (ch4      & 0xff);
+  vals[0] = ch1 >> 2;
+  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
+  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
+  vals[3] = (ch3 << 2 & 0xfc) | (ch4 >> 8 & 0x03);
+  vals[4] = (ch4      & 0xff);
 
   for (auto b : vals) { ret.push_back(b); }
   return ret;
+}
+
+template <typename... Args>
+inline string eeg_packet(uint16_t dropped, Args&&... args) {
+  string ret;
+  uint8_t prefix[3];
+
+  prefix[0] = 0xe << 4 | 1 << 3;
+  prefix[1] = dropped & 0xff;
+  prefix[2] = dropped >> 8;
+  for (auto b : prefix) { ret.push_back(b); }
+  return ret + eeg_samples(std::forward<Args>(args)...);
+}
+
+template <typename... Args,
+          typename std::enable_if<sizeof...(Args) == 4>::type* = nullptr>
+inline string eeg_packet(Args&&... args) {
+  uint8_t b = 0xe << 4;
+  string ret;
+
+  ret.push_back(b);
+  return ret + eeg_samples(std::forward<Args>(args)...);
 }
 
 constexpr bool has_dropped_samples(ix_pac_type t) {
@@ -192,8 +236,26 @@ TEST(PacketTest, ParseMultiplePackets) {
   EXPECT_EQ(IX_PAC_SYNC, pacs[5].type);
 }
 
+TEST(PacketTest, DroppedSamples) {
+  auto buf = acc_packet(3u, 1u, 2u, 3u);
+  auto r = test_parse(buf);
+  auto p = r.second.at(0);
+  EXPECT_EQ(IX_PAC_ACCELEROMETER, p.type);
+  EXPECT_EQ(3u, p.dropped_samples);
+
+  buf = acc_packet(321u, 7u, 8u, 9u);
+  r = test_parse(buf);
+  p = r.second.at(0);
+  EXPECT_EQ(321u, p.dropped_samples);
+
+  buf = eeg_packet(1337u, 1u, 2u, 3u, 4u);
+  r = test_parse(buf);
+  p = r.second.at(0);
+  EXPECT_EQ(IX_PAC_EEG, p.type);
+  EXPECT_EQ(1337u, p.dropped_samples);
+}
+
 // TODO(soon): drl_ref, battery, error, compressed eeg
-// TODO(soon): dropped samples
 // TODO(soon): NEED MORE vs BAD STR
 
 }  // namespace

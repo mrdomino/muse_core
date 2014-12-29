@@ -71,6 +71,24 @@ validate_packet_sync(HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
+act_flags_ndropped(const HParseResult* p, void* user_data)
+{
+  IX_UNUSED(user_data);
+  return H_MAKE_UINT(0);
+}
+
+static HParsedToken*
+act_prefix_dropped(const HParseResult* p, void* user_data)
+{
+  HParsedToken* dropped;
+
+  IX_UNUSED(user_data);
+  dropped = h_seq_index(p->ast, 1);
+  return H_MAKE_UINT(H_CAST_UINT(dropped));
+}
+
+
+static HParsedToken*
 act_packet_sync(const HParseResult* p, void* user_data)
 {
     ix_packet *pac;
@@ -116,12 +134,16 @@ act_packet_acc(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
   ix_samples_n *sam;
+  uint64_t dropped;
 
   IX_UNUSED(user_data);
 
+  dropped = H_CAST_UINT(h_seq_index(p->ast, 1));
+  assert(dropped < UINT16_MAX);
   sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_ACCELEROMETER;
+  pac->dropped_samples = (uint16_t)dropped;
   pac->samples = *sam;
   return H_MAKE(ix_packet, pac);
 }
@@ -131,12 +153,16 @@ act_packet_eeg4(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
   ix_samples_n *sam;
+  uint64_t dropped;
 
   IX_UNUSED(user_data);
 
+  dropped = H_CAST_UINT(h_seq_index(p->ast, 1));
+  assert(dropped < UINT16_MAX);
   sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_EEG;
+  pac->dropped_samples = (uint16_t)dropped;
   pac->samples = *sam;
   return H_MAKE(ix_packet, pac);
 }
@@ -163,12 +189,9 @@ IX_INITIALIZER(_pp_init_parser)
   H_VRULE(type_error, nibble);
 
   H_VRULE(flags_dropped, nibble);
-  H_VRULE(flags_ndropped, nibble);
-  H_RULE(dropped_samples, short_);
-  H_RULE(flags,
-         h_choice(h_sequence(flags_dropped, dropped_samples, NULL),
-                  flags_ndropped,
-                  NULL));
+  H_AVRULE(flags_ndropped, nibble);
+  H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
+  H_RULE(flags, h_choice(prefix_dropped, flags_ndropped, NULL));
 
   H_ARULE(samples_acc,
           h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
