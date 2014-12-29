@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <hammer/glue.h>
 #include <hammer/hammer.h>
-#include <string.h>
 
 
 typedef struct {

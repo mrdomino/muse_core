@@ -1,7 +1,6 @@
 /* Copyright 2014 InteraXon, Inc. */
 
 /*
- * include <assert.h> to use the getter macros
  * include <stddef.h> for size_t
  * include <stdint.h> for sized ints
  * include "defs.h" for SO_EXPORT
