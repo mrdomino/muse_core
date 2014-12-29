@@ -60,6 +60,17 @@ validate_packet_sync(HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
+act_packet_sync(const HParseResult* p, void* user_data)
+{
+    ix_packet *pac;
+
+    IX_UNUSED(user_data);
+    pac = H_ALLOC(ix_packet);
+    pac->type = IX_PAC_SYNC;
+    return H_MAKE(ix_packet, pac);
+}
+
+static HParsedToken*
 act_ix_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
                  void* user_data)
 {
@@ -167,7 +178,7 @@ IX_INITIALIZER(_pp_init_parser)
                     NULL));
   H_RULE(packet_error,
          h_sequence(type_error, flags_ndropped, word_, NULL));
-  H_VRULE(packet_sync, word_);
+  H_AVRULE(packet_sync, word_);
 
   H_RULE(packet,
          h_choice(packet_acc,
@@ -188,13 +199,9 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet* pac)
   ix_result    ret;
 
   if (r) {
-    if (r->ast->token_type == TT_UINT && r->ast->uint == 0x55aaffff) {
-      pac->type = IX_PAC_SYNC;
-    }
-    else if (r->ast->token_type == (HTokenType)TT_ix_packet) {
-      memcpy(pac, r->ast->user, sizeof(ix_packet));
-    }
+    assert(r->ast->token_type == (HTokenType)TT_ix_packet);
     assert(r->bit_length % 8 == 0);
+    memcpy(pac, r->ast->user, sizeof(ix_packet));
     ret = ix_r_uin(r->bit_length / 8);
     h_parse_result_free(r);
     return ret;
