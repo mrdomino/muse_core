@@ -92,12 +92,12 @@ act_prefix_dropped(const HParseResult* p, void* user_data)
 static HParsedToken*
 act_packet_sync(const HParseResult* p, void* user_data)
 {
-    ix_packet *pac;
+  ix_packet *pac;
 
-    IX_UNUSED(user_data);
-    pac = H_ALLOC(ix_packet);
-    pac->type = IX_PAC_SYNC;
-    return H_MAKE(ix_packet, pac);
+  IX_UNUSED(user_data);
+  pac = H_ALLOC(ix_packet);
+  pac->type = IX_PAC_SYNC;
+  return H_MAKE(ix_packet, pac);
 }
 
 static HParsedToken*
