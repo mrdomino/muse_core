@@ -1,3 +1,5 @@
+/* Copyright 2014 Interaxon, Inc. */
+
 #include <stdint.h>
 #include "defs.h"
 #include "result.h"

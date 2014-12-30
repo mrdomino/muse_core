@@ -1,3 +1,5 @@
+/* Copyright 2014 Interaxon, Inc. */
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>

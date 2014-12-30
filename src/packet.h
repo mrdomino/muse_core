@@ -1,4 +1,4 @@
-/* Copyright 2014 InteraXon, Inc. */
+/* Copyright 2014 Interaxon, Inc. */
 
 /*
  * include <stddef.h> for size_t

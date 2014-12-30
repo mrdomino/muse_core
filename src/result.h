@@ -1,3 +1,5 @@
+/* Copyright 2014 Interaxon, Inc. */
+
 /*
  * include <stdint.h> for sized int types.
  * include "defs.h" for SO_EXPORT

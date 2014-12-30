@@ -1,4 +1,4 @@
-/* Copyright 2014 InteraXon, Inc. */
+/* Copyright 2014 Interaxon, Inc. */
 
 /*
  * Muse Core library, batteries included.

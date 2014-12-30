@@ -1,4 +1,4 @@
-/* Copyright 2014 InteraXon, Inc. */
+/* Copyright 2014 Interaxon, Inc. */
 
 #if defined _WIN32 || defined __CYGWIN__
 # ifdef BUILDING_MUSE_CORE_DLL
