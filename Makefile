@@ -92,11 +92,13 @@ $(MUSE_CORE_INCDIR)/%.h: $(SRCDIR)/%.h
 	@echo copying $@
 	@cp $< $@
 
-$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c
+# TODO(someday): autogenned header dependencies
+
+$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS_S) $(CFLAGS) $<
 
-$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c
+$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS) $<
 
