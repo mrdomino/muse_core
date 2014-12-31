@@ -1,6 +1,7 @@
 /* Copyright 2014 Interaxon, Inc. */
 
 /*
+ * include <assert.h> for accessors
  * include <stddef.h> for size_t
  * include <stdint.h> for sized ints
  * include "defs.h" for SO_EXPORT
@@ -37,30 +38,43 @@ typedef void (*ix_packet_fn)(const ix_packet* p, void* user_data);
 SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
 
 /*
+ * Packet channel accessor.
+ *
+ * Provides access to the sample at a specific channel for a given
+ * accelerometer or EEG packet.
+ *
+ * WARNING: channel bound checks are implemented with assertions that
+ * compile to no-ops if NDEBUG is defined. Always validate user-supplied
+ * channel offsets before calling ix_packet_*_ch, or else you may
+ * inadvertently give users access to arbitrary program memory.
+ */
+SO_EXPORT uint16_t ix_packet_ch(const ix_packet* p, size_t channel);
+
+/*
  * Return the error code of the passed packet.
+ *
+ * Must be called only on packets of type IX_PAC_ERROR.
  */
 SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
 
 /*
- * Accelerometer type-specific accessors.
- *
- * These assert that ix_packet_type(p) == IX_PAC_ACCELEROMETER. It is an error
- * to call them on any other packet type.
+ * Accelerometer channel accessors.
  */
-SO_EXPORT uint16_t ix_packet_acc_ch1(const ix_packet* p);
-SO_EXPORT uint16_t ix_packet_acc_ch2(const ix_packet* p);
-SO_EXPORT uint16_t ix_packet_acc_ch3(const ix_packet* p);
+#define ix_packet_acc_ch(p, i) \
+  (assert(ix_packet_type(p) == IX_PAC_ACCELEROMETER), ix_packet_ch(p, i))
+#define ix_packet_acc_ch1(p) ix_packet_acc_ch(p, 0)
+#define ix_packet_acc_ch2(p) ix_packet_acc_ch(p, 1)
+#define ix_packet_acc_ch3(p) ix_packet_acc_ch(p, 2)
 
 /*
- * EEG type-specific accessors.
- *
- * These assert that ix_packet_type(p) == IX_PAC_EEG. It is an error to call
- * them on any other packet type.
+ * EEG channel accessors.
  */
-SO_EXPORT uint16_t ix_packet_eeg_ch1(const ix_packet* p);
-SO_EXPORT uint16_t ix_packet_eeg_ch2(const ix_packet* p);
-SO_EXPORT uint16_t ix_packet_eeg_ch3(const ix_packet* p);
-SO_EXPORT uint16_t ix_packet_eeg_ch4(const ix_packet* p);
+#define ix_packet_eeg_ch(p, i) \
+  (assert(ix_packet_type(p) == IX_PAC_EEG), ix_packet_ch(p, i))
+#define ix_packet_eeg_ch1(p) ix_packet_eeg_ch(p, 0)
+#define ix_packet_eeg_ch2(p) ix_packet_eeg_ch(p, 1)
+#define ix_packet_eeg_ch3(p) ix_packet_eeg_ch(p, 2)
+#define ix_packet_eeg_ch4(p) ix_packet_eeg_ch(p, 3)
 
 /*
  * Return the dropped samples value for this packet.

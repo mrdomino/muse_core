@@ -255,31 +255,24 @@ ix_packet_error(const ix_packet* p)
   return p->error;
 }
 
-#define _packet_assert_field(p, t, f) (assert((p)->type == (t)), f)
-#define _packet_typ_field(f, t, n) \
-  uint16_t \
-  ix_packet_ ##f ## _ch ##n(const ix_packet* p) \
-  { return _packet_assert_field(p, t, p->samples.data[n - 1]); } \
-  uint16_t ix_packet_acc_ch ##n(const ix_packet* p)
+uint16_t
+ix_packet_ch(const ix_packet* p, size_t channel)
+{
+  size_t nch;
 
-#define _packet_acc_field(n) _packet_typ_field(acc, IX_PAC_ACCELEROMETER, n)
-
-_packet_acc_field(1);
-_packet_acc_field(2);
-_packet_acc_field(3);
-
-#undef _packet_acc_field
-
-#define _packet_eeg_field(n) _packet_typ_field(eeg, IX_PAC_EEG, n)
-
-_packet_eeg_field(1);
-_packet_eeg_field(2);
-_packet_eeg_field(3);
-_packet_eeg_field(4);
-
-#undef _packet_eeg_field
-#undef _packet_typ_field
-#undef _packet_assert_field
+  switch (ix_packet_type(p)) {
+  case IX_PAC_EEG:
+    nch = 4;
+    break;
+  case IX_PAC_ACCELEROMETER:
+    nch = 3;
+    break;
+  default:
+    nch = 0;
+  }
+  assert(channel < nch);
+  return p->samples.data[channel];
+}
 
 uint16_t
 ix_packet_dropped_samples(const ix_packet* p)
