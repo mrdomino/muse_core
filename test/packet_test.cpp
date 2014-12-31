@@ -39,6 +39,17 @@ inline string sync_packet() {
   return ret;
 }
 
+inline string error_packet(uint32_t error) {
+  string ret;
+
+  ret.push_back(0xd << 4);
+  ret.push_back(error       & 0xff);
+  ret.push_back(error >> 8  & 0xff);
+  ret.push_back(error >> 16 & 0xff);
+  ret.push_back(error >> 24 & 0xff);
+  return ret;
+}
+
 inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
   string ret;
   uint8_t vals[4];
@@ -151,11 +162,15 @@ struct IxPacket {
       samples.push_back(ix_packet_eeg_ch3(p));
       samples.push_back(ix_packet_eeg_ch4(p));
     }
+    else if (type == IX_PAC_ERROR) {
+      error = ix_packet_error(p);
+    }
   }
 
   ix_pac_type type;
   uint16_t dropped_samples;
   vector<uint16_t> samples;
+  uint32_t error;
 };
 
 struct PacketParseError : ::exception {};
@@ -289,6 +304,17 @@ TEST_F(PacketTest, DroppedSamples) {
   parse();
   EXPECT_EQ(IX_PAC_EEG, p.type);
   EXPECT_EQ(1337u, p.dropped_samples);
+}
+
+TEST_F(PacketTest, ParsesErrorPacket) {
+  buf = error_packet(0x12345678);
+  parse();
+  ASSERT_EQ(IX_PAC_ERROR, p.type);
+  EXPECT_EQ(0x12345678u, p.error);
+  buf = error_packet(0);
+  parse();
+  ASSERT_EQ(IX_PAC_ERROR, p.type);
+  EXPECT_EQ(0u, p.error);
 }
 
 // TODO(soon): drl_ref, battery, error, compressed eeg

@@ -37,6 +37,11 @@ typedef void (*ix_packet_fn)(const ix_packet* p, void* user_data);
 SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
 
 /*
+ * Return the error code of the passed packet.
+ */
+SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
+
+/*
  * Accelerometer type-specific accessors.
  *
  * These assert that ix_packet_type(p) == IX_PAC_ACCELEROMETER. It is an error

@@ -21,8 +21,13 @@ typedef struct {
 
 struct _ix_packet {
   ix_pac_type  type;
-  uint16_t     dropped_samples;
-  ix_samples_n samples;
+  union {
+    struct {
+      uint16_t     dropped_samples;
+      ix_samples_n samples;
+    };
+    uint32_t error;
+  };
 };
 
 enum {
@@ -97,6 +102,18 @@ act_packet_sync(const HParseResult* p, void* user_data)
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
   pac->type = IX_PAC_SYNC;
+  return H_MAKE(ix_packet, pac);
+}
+
+static HParsedToken*
+act_packet_error(const HParseResult* p, void* user_data)
+{
+  ix_packet *pac;
+
+  IX_UNUSED(user_data);
+  pac = H_ALLOC(ix_packet);
+  pac->type = IX_PAC_ERROR;
+  pac->error = H_FIELD_UINT(2);
   return H_MAKE(ix_packet, pac);
 }
 
@@ -211,8 +228,8 @@ IX_INITIALIZER(_pp_init_parser)
   H_RULE(packet_battery,
          h_sequence(type_battery, flags_ndropped, h_repeat_n(short_, 4),
                     NULL));
-  H_RULE(packet_error,
-         h_sequence(type_error, flags_ndropped, word_, NULL));
+  H_ARULE(packet_error,
+          h_sequence(type_error, flags_ndropped, word_, NULL));
   H_AVRULE(packet_sync, word_);
 
   H_RULE(packet,
@@ -230,6 +247,13 @@ IX_INITIALIZER(_pp_init_parser)
 ix_pac_type
 ix_packet_type(const ix_packet* p)
 { return p->type; }
+
+uint32_t
+ix_packet_error(const ix_packet* p)
+{
+  assert(p->type == IX_PAC_ERROR);
+  return p->error;
+}
 
 #define _packet_assert_field(p, t, f) (assert((p)->type == (t)), f)
 #define _packet_typ_field(f, t, n) \
