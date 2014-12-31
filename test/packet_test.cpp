@@ -38,7 +38,7 @@ inline string sync_packet() {
   return ret;
 }
 
-inline string acc_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
+inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
   string ret;
   uint8_t vals[4];
 
@@ -66,7 +66,7 @@ inline string acc_packet(uint16_t dropped, Args&&... args) {
   prefix[2] = dropped >> 8;
 
   for (auto b : prefix) { ret.push_back(b); }
-  return ret + acc_samples(forward<Args>(args)...);
+  return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
 template <typename... Args,
@@ -76,11 +76,11 @@ inline string acc_packet(Args&&... args) {
   string ret;
 
   ret.push_back(b);
-  return ret + acc_samples(forward<Args>(args)...);
+  return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
-inline string eeg_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
-                          uint16_t ch4) {
+inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
+                                uint16_t ch4) {
   string ret;
   uint8_t vals[5];
 
@@ -109,7 +109,7 @@ inline string eeg_packet(uint16_t dropped, Args&&... args) {
   prefix[1] = dropped & 0xff;
   prefix[2] = dropped >> 8;
   for (auto b : prefix) { ret.push_back(b); }
-  return ret + eeg_samples(forward<Args>(args)...);
+  return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
 template <typename... Args,
@@ -119,7 +119,7 @@ inline string eeg_packet(Args&&... args) {
   string ret;
 
   ret.push_back(b);
-  return ret + eeg_samples(forward<Args>(args)...);
+  return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
