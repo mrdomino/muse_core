@@ -15,14 +15,14 @@
 
 
 typedef struct {
-    uint16_t n;
-    uint16_t data[4];
+  uint16_t n;
+  uint16_t data[4];
 } ix_samples_n;
 
 struct _ix_packet {
-    ix_pac_type  type;
-    uint16_t     dropped_samples;
-    ix_samples_n samples;
+  ix_pac_type  type;
+  uint16_t     dropped_samples;
+  ix_samples_n samples;
 };
 
 enum {
