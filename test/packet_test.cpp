@@ -7,12 +7,16 @@ extern "C" {
 #include <muse_core/packet.h>
 }
 
+#include <cmath>
+
+#include <array>
 #include <exception>
 #include <gtest/gtest.h>
 #include <string>
 #include <type_traits>
 #include <utility>
 
+using std::array;
 using std::enable_if;
 using std::exception;
 using std::forward;
@@ -50,46 +54,41 @@ inline string error_packet(uint32_t error) {
   return ret;
 }
 
-inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
-  string ret;
-  uint8_t vals[4];
-
-  // [11111111]
-  // [11222222]
-  // [22223333]
-  // [333333xx]
-
-  vals[0] = ch1 >> 2;
-  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
-  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
-  vals[3] = (ch3 << 2 & 0xfc);
-
-  for (auto b : vals) { ret.push_back(b); }
-  return ret;
-}
-
-inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
-                                uint16_t ch4) {
-  string ret;
-  uint8_t vals[5];
-
-  // [11111111]
-  // [11222222]
-  // [22223333]
-  // [33333344]
-  // [44444444]
-
-  vals[0] = ch1 >> 2;
-  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
-  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
-  vals[3] = (ch3 << 2 & 0xfc) | (ch4 >> 8 & 0x03);
-  vals[4] = (ch4      & 0xff);
-
-  for (auto b : vals) { ret.push_back(b); }
-  return ret;
-}
-
 template <typename... Args>
+inline string bitpacked_samples(Args&&... args) {
+  auto samples = std::array<uint16_t, sizeof...(Args)>{
+    {static_cast<uint16_t>(args)...}};
+  auto m = static_cast<size_t>(ceil(samples.size() * 10.0 / 8.0));
+  auto values = std::vector<uint8_t>();
+  values.reserve(m);
+  // [11111111] | 0
+  // [11000000] | [00222222]
+  // [22220000] | [00003333]
+  // [33333300] | [00000044]
+  // [44444444] | 0
+  auto sample = samples.cbegin();
+  for (auto i = 0u; i < m; ++i) {
+    uint8_t value, mask_b = 0, shift_b = 0;
+    assert(sample != samples.cend());
+    switch (i % 5) {
+    case 0: value = 0,              mask_b = 0xff, shift_b = 2; break;
+    case 1: value = *sample++ << 6, mask_b = 0x3f, shift_b = 4; break;
+    case 2: value = *sample++ << 4, mask_b = 0x0f, shift_b = 6; break;
+    case 3: value = *sample++ << 2, mask_b = 0x03, shift_b = 8; break;
+    case 4: value = *sample++; break;
+    default: assert(false);
+    }
+    if (mask_b && sample != samples.cend()) {
+      value |= *sample >> shift_b & mask_b;
+    }
+    values.push_back(value);
+  }
+  assert(sample == samples.cend());
+  return string(values.begin(), values.end());
+}
+
+template <typename... Args,
+          typename enable_if<sizeof...(Args) == 3>::type* = nullptr>
 inline string acc_packet(uint16_t dropped, Args&&... args) {
   string ret;
   uint8_t prefix[3];
@@ -112,7 +111,8 @@ inline string acc_packet(Args&&... args) {
   return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
-template <typename... Args>
+template <typename... Args,
+          typename enable_if<sizeof...(Args) == 4>::type* = nullptr>
 inline string eeg_packet(uint16_t dropped, Args&&... args) {
   string ret;
   uint8_t prefix[3];
