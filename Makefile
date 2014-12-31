@@ -148,7 +148,7 @@ unittests: $(MUSE_CORE_S) $(MUSE_CORE_H) $(UNITTEST_A_O) $(GTEST_A) \
 	@echo c++ld $@
 	@$(CXXLD) -o unittests \
 	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
-	  $(UNITTEST_A_O) -lmuse_core -lhammer -lgtest -lgtest_main
+	  $(UNITTEST_A_O) -lmuse_core -lgtest -lgtest_main
 
 $(GTEST_A): $(GTEST_SRC)/src/gtest-all.cc
 	@echo c++ $@
