@@ -57,11 +57,19 @@ SO_EXPORT uint16_t ix_packet_ch(const ix_packet* p, size_t channel);
  */
 SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
 
+#define _ix_assert_type(p, t) (assert(ix_packet_type(p) == t), (p))
+
+/*
+ * DRL/REF accessors.
+ */
+#define ix_packet_drl(p) ix_packet_ch(_ix_assert_type(p, IX_PAC_DRLREF), 0)
+#define ix_packet_ref(p) ix_packet_ch(_ix_assert_type(p, IX_PAC_DRLREF), 1)
+
 /*
  * Accelerometer channel accessors.
  */
 #define ix_packet_acc_ch(p, i) \
-  (assert(ix_packet_type(p) == IX_PAC_ACCELEROMETER), ix_packet_ch(p, i))
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_ACCELEROMETER), i)
 #define ix_packet_acc_ch1(p) ix_packet_acc_ch(p, 0)
 #define ix_packet_acc_ch2(p) ix_packet_acc_ch(p, 1)
 #define ix_packet_acc_ch3(p) ix_packet_acc_ch(p, 2)
@@ -70,7 +78,7 @@ SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
  * EEG channel accessors.
  */
 #define ix_packet_eeg_ch(p, i) \
-  (assert(ix_packet_type(p) == IX_PAC_EEG), ix_packet_ch(p, i))
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_EEG), i)
 #define ix_packet_eeg_ch1(p) ix_packet_eeg_ch(p, 0)
 #define ix_packet_eeg_ch2(p) ix_packet_eeg_ch(p, 1)
 #define ix_packet_eeg_ch3(p) ix_packet_eeg_ch(p, 2)

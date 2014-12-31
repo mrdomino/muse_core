@@ -135,6 +135,13 @@ act_ix_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
 }
 
 static HParsedToken*
+act_samples_drlref(const HParseResult* p, void* user_data)
+{
+  return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 2,
+                          user_data);
+}
+
+static HParsedToken*
 act_samples_acc(const HParseResult* p, void* user_data)
 {
   return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
@@ -145,6 +152,18 @@ static HParsedToken*
 act_samples_eeg4(const HParseResult* p, void* user_data)
 {
   return act_ix_samples_n(p, h_seq_elements(p->ast), 4, user_data);
+}
+
+static HParsedToken*
+act_packet_drlref(const HParseResult* p, void* user_data)
+{
+  ix_packet *pac;
+
+  IX_UNUSED(user_data);
+  pac = H_ALLOC(ix_packet);
+  pac->type = IX_PAC_DRLREF;
+  pac->samples = *H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
+  return H_MAKE(ix_packet, pac);
 }
 
 static HParsedToken*
@@ -211,6 +230,8 @@ IX_INITIALIZER(_pp_init_parser)
   H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
   H_RULE(flags, h_choice(prefix_dropped, flags_ndropped, NULL));
 
+  H_ARULE(samples_drlref,
+          h_sequence(h_repeat_n(sample, 2), h_ignore(h_bits(4, false)), NULL));
   H_ARULE(samples_acc,
           h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
   H_ARULE(samples_eeg4, h_repeat_n(sample, 4));
@@ -222,9 +243,8 @@ IX_INITIALIZER(_pp_init_parser)
 
   /* TODO(soon): compressed EEG */
 
-  H_RULE(packet_drl_ref,
-         h_sequence(type_drl_ref, flags_ndropped, h_repeat_n(sample, 2),
-                    NULL));
+  H_ARULE(packet_drlref,
+          h_sequence(type_drl_ref, flags_ndropped, samples_drlref, NULL));
   H_RULE(packet_battery,
          h_sequence(type_battery, flags_ndropped, h_repeat_n(short_, 4),
                     NULL));
@@ -235,7 +255,7 @@ IX_INITIALIZER(_pp_init_parser)
   H_RULE(packet,
          h_choice(packet_acc,
                   packet_eeg4,
-                  packet_drl_ref,
+                  packet_drlref,
                   packet_battery,
                   packet_error,
                   packet_sync,
@@ -262,13 +282,12 @@ ix_packet_ch(const ix_packet* p, size_t channel)
 
   switch (ix_packet_type(p)) {
   case IX_PAC_EEG:
-    nch = 4;
-    break;
+    nch = 4; break;
   case IX_PAC_ACCELEROMETER:
-    nch = 3;
-    break;
-  default:
-    nch = 0;
+    nch = 3; break;
+  case IX_PAC_DRLREF:
+    nch = 2; break;
+  default: nch = 0;
   }
   assert(channel < nch);
   return p->samples.data[channel];

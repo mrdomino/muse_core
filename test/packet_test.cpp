@@ -134,6 +134,13 @@ inline string eeg_packet(Args&&... args) {
   return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
+inline string drlref_packet(uint16_t drl, uint16_t ref) {
+  string ret;
+
+  ret.push_back(0x9 << 4);
+  return ret + bitpacked_samples(drl, ref);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //  Parse wrapper
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,12 +172,18 @@ struct IxPacket {
     else if (type == IX_PAC_ERROR) {
       error = ix_packet_error(p);
     }
+    else if (type == IX_PAC_DRLREF) {
+      drl = ix_packet_drl(p);
+      ref = ix_packet_ref(p);
+    }
   }
 
   ix_pac_type type;
   uint16_t dropped_samples;
   vector<uint16_t> samples;
   uint32_t error;
+  uint16_t drl;
+  uint16_t ref;
 };
 
 struct PacketParseError : ::exception {};
@@ -304,6 +317,20 @@ TEST_F(PacketTest, DroppedSamples) {
   parse();
   EXPECT_EQ(IX_PAC_EEG, p.type);
   EXPECT_EQ(1337u, p.dropped_samples);
+}
+
+TEST_F(PacketTest, ParsesDrlRef) {
+  buf = drlref_packet(3, 2);
+  parse();
+  ASSERT_EQ(IX_PAC_DRLREF, p.type);
+  EXPECT_EQ(3, p.drl);
+  EXPECT_EQ(2, p.ref);
+
+  buf = drlref_packet(1021, 1023);
+  parse();
+  ASSERT_EQ(IX_PAC_DRLREF, p.type);
+  EXPECT_EQ(1021u, p.drl);
+  EXPECT_EQ(1023u, p.ref);
 }
 
 TEST_F(PacketTest, ParsesErrorPacket) {
