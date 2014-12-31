@@ -56,6 +56,27 @@ inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
   return ret;
 }
 
+inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
+                                uint16_t ch4) {
+  string ret;
+  uint8_t vals[5];
+
+  // [11111111]
+  // [11222222]
+  // [22223333]
+  // [33333344]
+  // [44444444]
+
+  vals[0] = ch1 >> 2;
+  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
+  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
+  vals[3] = (ch3 << 2 & 0xfc) | (ch4 >> 8 & 0x03);
+  vals[4] = (ch4      & 0xff);
+
+  for (auto b : vals) { ret.push_back(b); }
+  return ret;
+}
+
 template <typename... Args>
 inline string acc_packet(uint16_t dropped, Args&&... args) {
   string ret;
@@ -77,27 +98,6 @@ inline string acc_packet(Args&&... args) {
 
   ret.push_back(b);
   return ret + bitpacked_samples(forward<Args>(args)...);
-}
-
-inline string bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
-                                uint16_t ch4) {
-  string ret;
-  uint8_t vals[5];
-
-  // [11111111]
-  // [11222222]
-  // [22223333]
-  // [33333344]
-  // [44444444]
-
-  vals[0] = ch1 >> 2;
-  vals[1] = (ch1 << 6 & 0xc0) | (ch2 >> 4 & 0x3f);
-  vals[2] = (ch2 << 4 & 0xf0) | (ch3 >> 6 & 0x0f);
-  vals[3] = (ch3 << 2 & 0xfc) | (ch4 >> 8 & 0x03);
-  vals[4] = (ch4      & 0xff);
-
-  for (auto b : vals) { ret.push_back(b); }
-  return ret;
 }
 
 template <typename... Args>
