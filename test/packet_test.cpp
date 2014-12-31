@@ -18,6 +18,7 @@ using std::exception;
 using std::forward;
 using std::make_pair;
 using std::pair;
+using std::remove_reference;
 using std::string;
 using std::vector;
 
@@ -131,6 +132,7 @@ constexpr bool has_dropped_samples(ix_pac_type t) {
 }
 
 struct IxPacket {
+  IxPacket(): type(static_cast<ix_pac_type>(0)), dropped_samples(0) {}
   IxPacket(const ix_packet* p):
     type(ix_packet_type(p)),
     dropped_samples(has_dropped_samples(type)?
@@ -174,24 +176,44 @@ pair<uint32_t, vector<IxPacket>> test_parse(string const& buf) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//  Test fixtures
+////////////////////////////////////////////////////////////////////////////////
+
+class PacketTest : public ::testing::Test {
+protected:
+  virtual ~PacketTest() {}
+  virtual void parse() {
+    r = test_parse(buf);
+    v = r.second;
+    if (v.size()) p = v.at(0);
+  }
+
+  string buf;
+  decltype(test_parse(buf)) r;
+  decltype(r.second) v;
+  remove_reference<decltype(v[0])>::type p;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 //  Test suite proper
 ////////////////////////////////////////////////////////////////////////////////
 
-TEST(PacketTest, ParseFailures) {
+TEST_F(PacketTest, ParseFailures) {
   EXPECT_ANY_THROW(test_parse("asdf"));
   EXPECT_ANY_THROW(test_parse(""));
 }
 
-TEST(PacketTest, ParsesSync) {
-  auto r = test_parse(sync_packet());
-  ASSERT_EQ(1u, r.second.size());
-  EXPECT_EQ(IX_PAC_SYNC, r.second[0].type);
+TEST_F(PacketTest, ParsesSync) {
+  buf = sync_packet();
+  parse();
+  ASSERT_EQ(1u, v.size());
+  EXPECT_EQ(IX_PAC_SYNC, v[0].type);
   EXPECT_EQ(4u, r.first);
 }
 
-TEST(PacketTest, ParsesAcc) {
-  auto r = test_parse(acc_packet(1u, 2u, 3u));
-  auto p = r.second.at(0);
+TEST_F(PacketTest, ParsesAcc) {
+  buf = acc_packet(1u, 2u, 3u);
+  parse();
   ASSERT_EQ(IX_PAC_ACCELEROMETER, p.type);
   EXPECT_EQ(1u, p.samples[0]);
   EXPECT_EQ(2u, p.samples[1]);
@@ -199,17 +221,17 @@ TEST(PacketTest, ParsesAcc) {
 
   auto maxval = (1u << 10) - 1u;
 
-  r = test_parse(acc_packet(maxval, maxval, maxval));
-  p = r.second.at(0);
+  buf = acc_packet(maxval, maxval, maxval);
+  parse();
   ASSERT_EQ(IX_PAC_ACCELEROMETER, p.type);
   EXPECT_EQ(maxval, p.samples[0]);
   EXPECT_EQ(maxval, p.samples[1]);
   EXPECT_EQ(maxval, p.samples[2]);
 }
 
-TEST(PacketTest, ParsesEeg) {
-  auto r = test_parse(eeg_packet(1u, 2u, 3u, 4u));
-  auto p = r.second.at(0);
+TEST_F(PacketTest, ParsesEeg) {
+  buf = eeg_packet(1u, 2u, 3u, 4u);
+  parse();
   ASSERT_EQ(IX_PAC_EEG, p.type);
   EXPECT_EQ(1u, p.samples[0]);
   EXPECT_EQ(2u, p.samples[1]);
@@ -218,19 +240,19 @@ TEST(PacketTest, ParsesEeg) {
 
   auto maxval = (1u << 10) - 1u;
 
-  r = test_parse(eeg_packet(maxval, maxval, maxval, maxval));
-  p = r.second.at(0);
+  buf = eeg_packet(maxval, maxval, maxval, maxval);
+  parse();
   EXPECT_EQ(maxval, p.samples[0]);
   EXPECT_EQ(maxval, p.samples[1]);
   EXPECT_EQ(maxval, p.samples[2]);
   EXPECT_EQ(maxval, p.samples[3]);
 }
 
-TEST(PacketTest, ParseMultiplePackets) {
-  auto buf = sync_packet() + acc_packet(0, 0, 0) + eeg_packet(511, 512, 53, 400)
-                           + acc_packet(737, 20, 3)
-                           + eeg_packet(1023, 1022, 1021, 1000)
-                           + sync_packet();
+TEST_F(PacketTest, ParseMultiplePackets) {
+  buf = sync_packet() + acc_packet(0, 0, 0) + eeg_packet(511, 512, 53, 400)
+                      + acc_packet(737, 20, 3)
+                      + eeg_packet(1023, 1022, 1021, 1000)
+                      + sync_packet();
   auto pacs = vector<IxPacket>();
   auto begin = buf.cbegin();
   auto end = buf.cend();
@@ -253,21 +275,18 @@ TEST(PacketTest, ParseMultiplePackets) {
   EXPECT_EQ(IX_PAC_SYNC, pacs[5].type);
 }
 
-TEST(PacketTest, DroppedSamples) {
-  auto buf = acc_packet(3u, 1u, 2u, 3u);
-  auto r = test_parse(buf);
-  auto p = r.second.at(0);
+TEST_F(PacketTest, DroppedSamples) {
+  buf = acc_packet(3u, 1u, 2u, 3u);
+  parse();
   EXPECT_EQ(IX_PAC_ACCELEROMETER, p.type);
   EXPECT_EQ(3u, p.dropped_samples);
 
   buf = acc_packet(321u, 7u, 8u, 9u);
-  r = test_parse(buf);
-  p = r.second.at(0);
+  parse();
   EXPECT_EQ(321u, p.dropped_samples);
 
   buf = eeg_packet(1337u, 1u, 2u, 3u, 4u);
-  r = test_parse(buf);
-  p = r.second.at(0);
+  parse();
   EXPECT_EQ(IX_PAC_EEG, p.type);
   EXPECT_EQ(1337u, p.dropped_samples);
 }
