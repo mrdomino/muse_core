@@ -49,14 +49,13 @@ static HParser *parser;
   act_type_ ##N(const HParseResult* p, void* user_data) { \
     IX_UNUSED(user_data);                                 \
     return H_MAKE_UINT(T);                                \
-  }                                                       \
-  static bool validate_type_ ##N(HParseResult* p, void* user_data)
+  }
 
-ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9);
-ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa);
-ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb);
-ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd);
-ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe);
+ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
+ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
+ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
+ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
+ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
 #undef ACT_VALIDATE_TYPE
 
