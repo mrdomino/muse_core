@@ -60,6 +60,18 @@ SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
 #define _ix_assert_type(p, t) (assert(ix_packet_type(p) == t), (p))
 
 /*
+ * Battery accessors.
+ */
+#define ix_packet_battery_percent(p) \
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 0)
+#define ix_packet_battery_fuel_gauge_mv(p) \
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 1)
+#define ix_packet_battery_adc_mv(p) \
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 2)
+#define ix_packet_battery_temp_c(p) \
+  ((int16_t)ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 3))
+
+/*
  * DRL/REF accessors.
  */
 #define ix_packet_drl(p) ix_packet_ch(_ix_assert_type(p, IX_PAC_DRLREF), 0)

@@ -33,13 +33,17 @@ namespace {
 //  Packet builders
 ////////////////////////////////////////////////////////////////////////////////
 
+template <typename Container, typename Val>
+inline void append_little_endian_bytes(Container* c, Val const& v) {
+  for (auto i = 0u; i < sizeof(Val); ++i) {
+    c->push_back(v >> (i * 8) & 0xff);
+  }
+}
+
 inline string sync_packet() {
   string ret;
 
-  ret.push_back(0xff);
-  ret.push_back(0xff);
-  ret.push_back(0xaa);
-  ret.push_back(0x55);
+  append_little_endian_bytes(&ret, 0x55aaffff);
   return ret;
 }
 
@@ -47,10 +51,19 @@ inline string error_packet(uint32_t error) {
   string ret;
 
   ret.push_back(0xd << 4);
-  ret.push_back(error       & 0xff);
-  ret.push_back(error >> 8  & 0xff);
-  ret.push_back(error >> 16 & 0xff);
-  ret.push_back(error >> 24 & 0xff);
+  append_little_endian_bytes(&ret, error);
+  return ret;
+}
+
+inline string battery_packet(uint16_t pct, uint16_t fuel_mv, uint16_t adc_mv,
+                             int16_t temp_c) {
+  string ret;
+
+  ret.push_back(0xb << 4);
+  append_little_endian_bytes(&ret, pct);
+  append_little_endian_bytes(&ret, fuel_mv);
+  append_little_endian_bytes(&ret, adc_mv);
+  append_little_endian_bytes(&ret, temp_c);
   return ret;
 }
 
@@ -176,6 +189,12 @@ struct IxPacket {
       drl = ix_packet_drl(p);
       ref = ix_packet_ref(p);
     }
+    else if (type == IX_PAC_BATTERY) {
+      battery_pct = ix_packet_battery_percent(p);
+      fuel_mv = ix_packet_battery_fuel_gauge_mv(p);
+      adc_mv = ix_packet_battery_adc_mv(p);
+      temp_c = ix_packet_battery_temp_c(p);
+    }
   }
 
   ix_pac_type type;
@@ -184,6 +203,10 @@ struct IxPacket {
   uint32_t error;
   uint16_t drl;
   uint16_t ref;
+  uint16_t battery_pct;
+  uint16_t fuel_mv;
+  uint16_t adc_mv;
+  int16_t temp_c;
 };
 
 struct PacketParseError : ::exception {};
@@ -333,6 +356,23 @@ TEST_F(PacketTest, ParsesDrlRef) {
   EXPECT_EQ(1023u, p.ref);
 }
 
+TEST_F(PacketTest, ParsesBattery) {
+  buf = battery_packet(8731, 1337, 1234, 451);
+  parse();
+  ASSERT_EQ(IX_PAC_BATTERY, p.type);
+  EXPECT_EQ(8731u, p.battery_pct);
+  EXPECT_EQ(1337u, p.fuel_mv);
+  EXPECT_EQ(1234u, p.adc_mv);
+  EXPECT_EQ(451, p.temp_c);
+  buf = battery_packet(1, 2, 3, -270);
+  parse();
+  ASSERT_EQ(IX_PAC_BATTERY, p.type);
+  EXPECT_EQ(1u, p.battery_pct);
+  EXPECT_EQ(2u, p.fuel_mv);
+  EXPECT_EQ(3u, p.adc_mv);
+  EXPECT_EQ(-270, p.temp_c);
+}
+
 TEST_F(PacketTest, ParsesErrorPacket) {
   buf = error_packet(0x12345678);
   parse();
@@ -344,7 +384,7 @@ TEST_F(PacketTest, ParsesErrorPacket) {
   EXPECT_EQ(0u, p.error);
 }
 
-// TODO(soon): drl_ref, battery, error, compressed eeg
+// TODO(soon): compressed eeg
 // TODO(soon): NEED MORE vs BAD STR
 
 }  // namespace
