@@ -96,29 +96,6 @@ act_prefix_dropped(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_packet_sync(const HParseResult* p, void* user_data)
-{
-  ix_packet *pac;
-
-  IX_UNUSED(user_data);
-  pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_SYNC;
-  return H_MAKE(ix_packet, pac);
-}
-
-static HParsedToken*
-act_packet_error(const HParseResult* p, void* user_data)
-{
-  ix_packet *pac;
-
-  IX_UNUSED(user_data);
-  pac = H_ALLOC(ix_packet);
-  pac->type = H_FIELD_UINT(0);
-  pac->error = H_FIELD_UINT(2);
-  return H_MAKE(ix_packet, pac);
-}
-
-static HParsedToken*
 act_ix_samples_n(const HParseResult* p, const HParsedToken* sam,
                  void* user_data)
 {
@@ -149,6 +126,29 @@ ACT_SAMPLES(samples_acc, h_seq_index(p->ast, 0));
 ACT_SAMPLES(samples_eeg4, p->ast);
 
 #undef ACT_SAMPLES
+
+static HParsedToken*
+act_packet_sync(const HParseResult* p, void* user_data)
+{
+  ix_packet *pac;
+
+  IX_UNUSED(user_data);
+  pac = H_ALLOC(ix_packet);
+  pac->type = IX_PAC_SYNC;
+  return H_MAKE(ix_packet, pac);
+}
+
+static HParsedToken*
+act_packet_error(const HParseResult* p, void* user_data)
+{
+  ix_packet *pac;
+
+  IX_UNUSED(user_data);
+  pac = H_ALLOC(ix_packet);
+  pac->type = H_FIELD_UINT(0);
+  pac->error = H_FIELD_UINT(2);
+  return H_MAKE(ix_packet, pac);
+}
 
 static HParsedToken*
 act_packet_battery(const HParseResult* p, void* user_data)
