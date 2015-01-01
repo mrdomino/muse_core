@@ -102,7 +102,6 @@ act_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
   uint8_t      i;
 
   IX_UNUSED(user_data);
-
   out = H_ALLOC(ix_samples_n);
   out->n = h_seq_len(sam);
   for (i = 0; i < out->n; i++) {
