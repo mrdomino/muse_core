@@ -119,7 +119,7 @@ act_packet_error(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_ix_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
+act_ix_samples_n(const HParseResult* p, const HParsedToken* sam,
                  void* user_data)
 {
   ix_samples_n *out;
@@ -128,38 +128,27 @@ act_ix_samples_n(const HParseResult* p, HParsedToken** sam, uint8_t n,
   IX_UNUSED(user_data);
 
   out = H_ALLOC(ix_samples_n);
-  out->n = n;
-  for (i = 0; i < n; i++) {
-    out->data[i] = H_CAST_UINT(sam[i]);
+  out->n = h_seq_len(sam);
+  for (i = 0; i < out->n; i++) {
+    out->data[i] = H_INDEX_UINT(sam, i);
   }
   return H_MAKE(ix_samples_n, out);
 }
 
-static HParsedToken*
-act_data_battery(const HParseResult* p, void* user_data)
-{
-  return act_ix_samples_n(p, h_seq_elements(p->ast), 4, user_data);
-}
+#define ACT_SAMPLES(NAME, SAMPLES)            \
+  static HParsedToken*                        \
+  act_ ##NAME(const HParseResult* p, void* u) \
+  {                                           \
+    return act_ix_samples_n(p, SAMPLES, u);   \
+  }                                           \
+  static HParsedToken* act_ ##NAME(const HParseResult* p, void* u)
 
-static HParsedToken*
-act_samples_drlref(const HParseResult* p, void* user_data)
-{
-  return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 2,
-                          user_data);
-}
+ACT_SAMPLES(data_battery, p->ast);
+ACT_SAMPLES(samples_drlref, h_seq_index(p->ast, 0));
+ACT_SAMPLES(samples_acc, h_seq_index(p->ast, 0));
+ACT_SAMPLES(samples_eeg4, p->ast);
 
-static HParsedToken*
-act_samples_acc(const HParseResult* p, void* user_data)
-{
-  return act_ix_samples_n(p, h_seq_elements(h_seq_index(p->ast, 0)), 3,
-                          user_data);
-}
-
-static HParsedToken*
-act_samples_eeg4(const HParseResult* p, void* user_data)
-{
-  return act_ix_samples_n(p, h_seq_elements(p->ast), 4, user_data);
-}
+#undef ACT_SAMPLES
 
 static HParsedToken*
 act_packet_battery(const HParseResult* p, void* user_data)
