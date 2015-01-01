@@ -38,22 +38,27 @@ enum {
 static HParser *parser;
 
 
-#define VALIDATE_TYPE(x, n)                             \
-  static bool                                           \
-  validate_type_ ##x(HParseResult* p, void* user_data)  \
-  {                                                     \
-    IX_UNUSED(user_data);                               \
-    return H_CAST_UINT(p->ast) == (n);                  \
-  }                                                     \
-  static bool validate_type_ ##x(HParseResult* p, void* user_data)
+#define ACT_VALIDATE_TYPE(N, T, C)                        \
+  static bool                                             \
+  validate_type_ ##N(HParseResult* p, void* user_data)    \
+  {                                                       \
+    IX_UNUSED(user_data);                                 \
+    return H_CAST_UINT(p->ast) == (C);                    \
+  }                                                       \
+  static HParsedToken*                                    \
+  act_type_ ##N(const HParseResult* p, void* user_data) { \
+    IX_UNUSED(user_data);                                 \
+    return H_MAKE_UINT(T);                                \
+  }                                                       \
+  static bool validate_type_ ##N(HParseResult* p, void* user_data)
 
-VALIDATE_TYPE(drl_ref, 0x9);
-VALIDATE_TYPE(acc,     0xa);
-VALIDATE_TYPE(battery, 0xb);
-VALIDATE_TYPE(error,   0xd);
-VALIDATE_TYPE(eeg,     0xe);
+ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9);
+ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa);
+ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb);
+ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd);
+ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe);
 
-#undef VALIDATE_TYPE
+#undef ACT_VALIDATE_TYPE
 
 static bool
 validate_flags_dropped(HParseResult* p, void* user_data)
@@ -86,13 +91,9 @@ act_flags_ndropped(const HParseResult* p, void* user_data)
 static HParsedToken*
 act_prefix_dropped(const HParseResult* p, void* user_data)
 {
-  HParsedToken* dropped;
-
   IX_UNUSED(user_data);
-  dropped = h_seq_index(p->ast, 1);
-  return H_MAKE_UINT(H_CAST_UINT(dropped));
+  return H_MAKE_UINT(H_FIELD_UINT(1));
 }
-
 
 static HParsedToken*
 act_packet_sync(const HParseResult* p, void* user_data)
@@ -112,7 +113,7 @@ act_packet_error(const HParseResult* p, void* user_data)
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_ERROR;
+  pac->type = H_FIELD_UINT(0);
   pac->error = H_FIELD_UINT(2);
   return H_MAKE(ix_packet, pac);
 }
@@ -167,8 +168,8 @@ act_packet_battery(const HParseResult* p, void* user_data)
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_BATTERY;
-  pac->samples = *H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
+  pac->type = H_FIELD_UINT(0);
+  pac->samples = *H_FIELD(ix_samples_n, 2);
   return H_MAKE(ix_packet, pac);
 }
 
@@ -179,8 +180,8 @@ act_packet_drlref(const HParseResult* p, void* user_data)
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_DRLREF;
-  pac->samples = *H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
+  pac->type = H_FIELD_UINT(0);
+  pac->samples = *H_FIELD(ix_samples_n, 2);
   return H_MAKE(ix_packet, pac);
 }
 
@@ -188,18 +189,12 @@ static HParsedToken*
 act_packet_acc(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
-  ix_samples_n *sam;
-  uint64_t dropped;
 
   IX_UNUSED(user_data);
-
-  dropped = H_CAST_UINT(h_seq_index(p->ast, 1));
-  assert(dropped < UINT16_MAX);
-  sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_ACCELEROMETER;
-  pac->dropped_samples = (uint16_t)dropped;
-  pac->samples = *sam;
+  pac->type = H_FIELD_UINT(0);
+  pac->dropped_samples = H_FIELD_UINT(1);
+  pac->samples = *H_FIELD(ix_samples_n, 2);
   return H_MAKE(ix_packet, pac);
 }
 
@@ -207,18 +202,12 @@ static HParsedToken*
 act_packet_eeg4(const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
-  ix_samples_n *sam;
-  uint64_t dropped;
 
   IX_UNUSED(user_data);
-
-  dropped = H_CAST_UINT(h_seq_index(p->ast, 1));
-  assert(dropped < UINT16_MAX);
-  sam = H_CAST(ix_samples_n, h_seq_index(p->ast, 2));
   pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_EEG;
-  pac->dropped_samples = (uint16_t)dropped;
-  pac->samples = *sam;
+  pac->type = H_FIELD_UINT(0);
+  pac->dropped_samples = H_FIELD_UINT(1);
+  pac->samples = *H_FIELD(ix_samples_n, 2);
   return H_MAKE(ix_packet, pac);
 }
 
@@ -237,11 +226,11 @@ IX_INITIALIZER(_pp_init_parser)
   H_RULE(word_, h_with_endianness(MUSE_ENDIAN, h_uint32()));
 #undef MUSE_ENDIAN
 
-  H_VRULE(type_acc, nibble);
-  H_VRULE(type_eeg, nibble);
-  H_VRULE(type_drl_ref, nibble);
-  H_VRULE(type_battery, nibble);
-  H_VRULE(type_error, nibble);
+  H_AVRULE(type_acc, nibble);
+  H_AVRULE(type_eeg, nibble);
+  H_AVRULE(type_drlref, nibble);
+  H_AVRULE(type_battery, nibble);
+  H_AVRULE(type_error, nibble);
 
   H_VRULE(flags_dropped, nibble);
   H_AVRULE(flags_ndropped, nibble);
@@ -263,7 +252,7 @@ IX_INITIALIZER(_pp_init_parser)
   /* TODO(soon): compressed EEG */
 
   H_ARULE(packet_drlref,
-          h_sequence(type_drl_ref, flags_ndropped, samples_drlref, NULL));
+          h_sequence(type_drlref, flags_ndropped, samples_drlref, NULL));
   H_ARULE(packet_battery,
           h_sequence(type_battery, flags_ndropped, data_battery, NULL));
   H_ARULE(packet_error,
