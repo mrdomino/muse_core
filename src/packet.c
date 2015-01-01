@@ -96,7 +96,7 @@ act_prefix_dropped(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_ix_samples_n(const HParseResult* p, const HParsedToken* sam,
+act_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
                  void* user_data)
 {
   ix_samples_n *out;
@@ -112,20 +112,10 @@ act_ix_samples_n(const HParseResult* p, const HParsedToken* sam,
   return H_MAKE(ix_samples_n, out);
 }
 
-#define ACT_SAMPLES(NAME, SAMPLES)            \
-  static HParsedToken*                        \
-  act_ ##NAME(const HParseResult* p, void* u) \
-  {                                           \
-    return act_ix_samples_n(p, SAMPLES, u);   \
-  }                                           \
-  static HParsedToken* act_ ##NAME(const HParseResult* p, void* u)
-
-ACT_SAMPLES(data_battery, p->ast);
-ACT_SAMPLES(samples_drlref, h_seq_index(p->ast, 0));
-ACT_SAMPLES(samples_acc, h_seq_index(p->ast, 0));
-ACT_SAMPLES(samples_eeg4, p->ast);
-
-#undef ACT_SAMPLES
+H_ACT_APPLY(act_data_battery, act_ix_samples_n, p->ast)
+H_ACT_APPLY(act_samples_drlref, act_ix_samples_n, h_seq_index(p->ast, 0))
+H_ACT_APPLY(act_samples_acc, act_ix_samples_n, h_seq_index(p->ast, 0))
+H_ACT_APPLY(act_samples_eeg4, act_ix_samples_n, p->ast)
 
 static HParsedToken*
 act_packet_sync(const HParseResult* p, void* user_data)
