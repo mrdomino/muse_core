@@ -59,26 +59,19 @@ ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
 #undef ACT_VALIDATE_TYPE
 
-static bool
-validate_flags_dropped(HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return (H_CAST_UINT(p->ast) & 0x8) == 0x8;
-}
+#define VALIDATE_UINT_PRED(N, P) \
+  static bool \
+  validate_ ##N(HParseResult* p, void* user_data) \
+  { \
+    IX_UNUSED(user_data); \
+    return P; \
+  }
 
-static bool
-validate_flags_ndropped(HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return H_CAST_UINT(p->ast) == 0;
-}
+VALIDATE_UINT_PRED(flags_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0x8)
+VALIDATE_UINT_PRED(flags_ndropped, (H_CAST_UINT(p->ast) & 0x8) == 0)
+VALIDATE_UINT_PRED(packet_sync, H_CAST_UINT(p->ast) == 0x55aaffff)
 
-static bool
-validate_packet_sync(HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return p->ast->uint == 0x55aaffff;
-}
+#undef VALIDATE_UINT_PRED
 
 static HParsedToken*
 act_flags_ndropped(const HParseResult* p, void* user_data)
