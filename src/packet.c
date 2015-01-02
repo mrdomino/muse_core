@@ -233,6 +233,7 @@ ix_packet_error(const ix_packet* p)
 uint16_t
 ix_packet_ch(const ix_packet* p, size_t channel)
 {
+#ifndef NDEBUG
   size_t nch;
 
   switch (ix_packet_type(p)) {
@@ -243,6 +244,7 @@ ix_packet_ch(const ix_packet* p, size_t channel)
   default:                   nch = 0;
   }
   assert(channel < nch);
+#endif
   return p->samples.data[channel];
 }
 
