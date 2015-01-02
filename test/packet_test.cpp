@@ -12,7 +12,6 @@ extern "C" {
 #include <array>
 #include <exception>
 #include <gtest/gtest.h>
-#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -23,10 +22,18 @@ using std::forward;
 using std::make_pair;
 using std::pair;
 using std::remove_reference;
-using std::string;
 using std::vector;
 
+using parse_input = vector<uint8_t>;
+
 namespace {
+
+parse_input operator+(parse_input const& lhs, parse_input const& rhs) {
+  parse_input ret = lhs;
+
+  ret.insert(ret.end(), rhs.begin(), rhs.end());
+  return ret;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -40,24 +47,24 @@ inline void append_little_endian_bytes(Container* c, Val const& v) {
   }
 }
 
-inline string sync_packet() {
-  string ret;
+inline parse_input sync_packet() {
+  parse_input ret;
 
   append_little_endian_bytes(&ret, 0x55aaffff);
   return ret;
 }
 
-inline string error_packet(uint32_t error) {
-  string ret;
+inline parse_input error_packet(uint32_t error) {
+  parse_input ret;
 
   ret.push_back(0xd << 4);
   append_little_endian_bytes(&ret, error);
   return ret;
 }
 
-inline string battery_packet(uint16_t pct, uint16_t fuel_mv, uint16_t adc_mv,
-                             int16_t temp_c) {
-  string ret;
+inline parse_input battery_packet(uint16_t pct, uint16_t fuel_mv,
+                                  uint16_t adc_mv, int16_t temp_c) {
+  parse_input ret;
 
   ret.push_back(0xb << 4);
   append_little_endian_bytes(&ret, pct);
@@ -68,7 +75,7 @@ inline string battery_packet(uint16_t pct, uint16_t fuel_mv, uint16_t adc_mv,
 }
 
 template <typename... Args>
-inline string bitpacked_samples(Args&&... args) {
+inline parse_input bitpacked_samples(Args&&... args) {
   auto samples = std::array<uint16_t, sizeof...(Args)>{
     {static_cast<uint16_t>(args)...}};
   auto m = static_cast<size_t>(ceil(samples.size() * 10.0 / 8.0));
@@ -97,13 +104,13 @@ inline string bitpacked_samples(Args&&... args) {
     values.push_back(value);
   }
   assert(sample == samples.cend());
-  return string(values.begin(), values.end());
+  return parse_input(values.begin(), values.end());
 }
 
 template <typename... Args,
           typename enable_if<sizeof...(Args) == 3>::type* = nullptr>
-inline string acc_packet(uint16_t dropped, Args&&... args) {
-  string ret;
+inline parse_input acc_packet(uint16_t dropped, Args&&... args) {
+  parse_input ret;
   uint8_t prefix[3];
 
   prefix[0] = 0xa << 4 | 1 << 3;
@@ -116,9 +123,9 @@ inline string acc_packet(uint16_t dropped, Args&&... args) {
 
 template <typename... Args,
           typename enable_if<sizeof...(Args) == 3>::type* = nullptr>
-inline string acc_packet(Args&&... args) {
+inline parse_input acc_packet(Args&&... args) {
   uint8_t b = 0xa << 4;
-  string ret;
+  parse_input ret;
 
   ret.push_back(b);
   return ret + bitpacked_samples(forward<Args>(args)...);
@@ -126,8 +133,8 @@ inline string acc_packet(Args&&... args) {
 
 template <typename... Args,
           typename enable_if<sizeof...(Args) == 4>::type* = nullptr>
-inline string eeg_packet(uint16_t dropped, Args&&... args) {
-  string ret;
+inline parse_input eeg_packet(uint16_t dropped, Args&&... args) {
+  parse_input ret;
   uint8_t prefix[3];
 
   prefix[0] = 0xe << 4 | 1 << 3;
@@ -139,16 +146,16 @@ inline string eeg_packet(uint16_t dropped, Args&&... args) {
 
 template <typename... Args,
           typename enable_if<sizeof...(Args) == 4>::type* = nullptr>
-inline string eeg_packet(Args&&... args) {
+inline parse_input eeg_packet(Args&&... args) {
   uint8_t b = 0xe << 4;
-  string ret;
+  parse_input ret;
 
   ret.push_back(b);
   return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
-inline string drlref_packet(uint16_t drl, uint16_t ref) {
-  string ret;
+inline parse_input drlref_packet(uint16_t drl, uint16_t ref) {
+  parse_input ret;
 
   ret.push_back(0x9 << 4);
   return ret + bitpacked_samples(drl, ref);
@@ -211,13 +218,13 @@ struct IxPacket {
 
 struct PacketParseError : ::exception {};
 
-pair<uint32_t, vector<IxPacket>> test_parse(string const& buf) {
+pair<uint32_t, vector<IxPacket>> test_parse(parse_input const& buf) {
   auto pacs = vector<IxPacket>();
   ix_packet_fn pac_f = [](const ix_packet* p, void* user_data) {
     auto pacs = static_cast<vector<IxPacket>*>(user_data);
     pacs->push_back(IxPacket(p));
   };
-  auto r = ix_packet_parse((uint8_t*)buf.c_str(), buf.size(), pac_f, &pacs);
+  auto r = ix_packet_parse(buf.data(), buf.size(), pac_f, &pacs);
   if (r.err == IX_OK) {
     return make_pair(r.res.uin, pacs);
   }
@@ -239,7 +246,7 @@ protected:
     if (v.size()) p = v.at(0);
   }
 
-  string buf;
+  parse_input buf;
   decltype(test_parse(buf)) r;
   decltype(r.second) v;
   remove_reference<decltype(v[0])>::type p;
@@ -250,8 +257,12 @@ protected:
 ////////////////////////////////////////////////////////////////////////////////
 
 TEST_F(PacketTest, ParseFailures) {
-  EXPECT_ANY_THROW(test_parse("asdf"));
-  EXPECT_ANY_THROW(test_parse(""));
+  parse_input garbage;
+  for (auto c : "hello world\n") {
+      garbage.push_back(c);
+  }
+  EXPECT_ANY_THROW(test_parse(garbage));
+  EXPECT_ANY_THROW(test_parse(parse_input()));
 }
 
 // Disabled: too slow
@@ -314,7 +325,7 @@ TEST_F(PacketTest, ParseMultiplePackets) {
   auto begin = buf.cbegin();
   auto end = buf.cend();
   while (begin != end) {
-    auto r = test_parse(string(begin, end));
+    auto r = test_parse(parse_input(begin, end));
     auto v = r.second;
     pacs.insert(pacs.end(), v.begin(), v.end());
     begin += r.first;
