@@ -38,17 +38,20 @@ enum {
 static HParser *parser;
 
 
-#define ACT_VALIDATE_TYPE(N, T, C)                        \
-  static bool                                             \
-  validate_type_ ##N(HParseResult* p, void* user_data)    \
-  {                                                       \
-    IX_UNUSED(user_data);                                 \
-    return H_CAST_UINT(p->ast) == (C);                    \
-  }                                                       \
-  static HParsedToken*                                    \
-  act_type_ ##N(const HParseResult* p, void* user_data) { \
-    IX_UNUSED(user_data);                                 \
-    return H_MAKE_UINT(T);                                \
+#define VALIDATE_UINT_PRED(N, P)                  \
+  static bool                                     \
+  validate_ ##N(HParseResult* p, void* user_data) \
+  {                                               \
+    IX_UNUSED(user_data);                         \
+    return P;                                     \
+  }
+
+#define ACT_VALIDATE_TYPE(N, T, C)                          \
+  VALIDATE_UINT_PRED(type_ ##N, H_CAST_UINT(p->ast) == (C)) \
+  static HParsedToken*                                      \
+  act_type_ ##N(const HParseResult* p, void* user_data) {   \
+    IX_UNUSED(user_data);                                   \
+    return H_MAKE_UINT(T);                                  \
   }
 
 ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
@@ -57,20 +60,11 @@ ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
 ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
 ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
-#undef ACT_VALIDATE_TYPE
-
-#define VALIDATE_UINT_PRED(N, P) \
-  static bool \
-  validate_ ##N(HParseResult* p, void* user_data) \
-  { \
-    IX_UNUSED(user_data); \
-    return P; \
-  }
-
 VALIDATE_UINT_PRED(flags_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0x8)
 VALIDATE_UINT_PRED(flags_ndropped, (H_CAST_UINT(p->ast) & 0x8) == 0)
 VALIDATE_UINT_PRED(packet_sync, H_CAST_UINT(p->ast) == 0x55aaffff)
 
+#undef ACT_VALIDATE_TYPE
 #undef VALIDATE_UINT_PRED
 
 static HParsedToken*
