@@ -35,7 +35,7 @@ CXXFLAGS += $(INCS)
 LDFLAGS += $(LIBS)
 CXXLDFLAGS += $(LIBS)
 
-MUSE_CORE_MOD = connect packet r result util version
+MUSE_CORE_MOD = connect packet r result version
 
 MUSE_CORE_INC = connect defs muse_core packet result serial util version
 
