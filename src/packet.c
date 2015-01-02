@@ -218,14 +218,11 @@ ix_packet_ch(const ix_packet* p, size_t channel)
   size_t nch;
 
   switch (ix_packet_type(p)) {
-  case IX_PAC_BATTERY:
-  case IX_PAC_EEG:
-    nch = 4; break;
-  case IX_PAC_ACCELEROMETER:
-    nch = 3; break;
-  case IX_PAC_DRLREF:
-    nch = 2; break;
-  default: nch = 0;
+  case IX_PAC_BATTERY:       /*FALLTHROUGH*/
+  case IX_PAC_EEG:           nch = 4; break;
+  case IX_PAC_ACCELEROMETER: nch = 3; break;
+  case IX_PAC_DRLREF:        nch = 2; break;
+  default:                   nch = 0;
   }
   assert(channel < nch);
   return p->samples.data[channel];
@@ -234,8 +231,7 @@ ix_packet_ch(const ix_packet* p, size_t channel)
 uint16_t
 ix_packet_dropped_samples(const ix_packet* p)
 {
-  assert(p->type == IX_PAC_ACCELEROMETER ||
-         p->type == IX_PAC_EEG);
+  assert(p->type == IX_PAC_ACCELEROMETER || p->type == IX_PAC_EEG);
   return p->dropped_samples;
 }
 
