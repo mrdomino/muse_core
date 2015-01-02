@@ -1,4 +1,14 @@
 Muse Core
 ---------
 
-This is a pure C implementation of core Muse client algorithms.
+This library is intended to provide secure, simple reference implementations of
+core Muse client algorithms. It can be linked against directly as part of a
+client software package, or used to verify a custom implementation.
+
+It is fairly low-level. It should know how to send and read responses to serial
+commands, how to deserialize packets off the wire, and when to transition the
+connection state machine. It does not implement Bluetooth communication or
+client-facing packet data types. It doesn't know anything about event loops or
+threads.
+
+Everything is reentrant except where specified.
