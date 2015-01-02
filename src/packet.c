@@ -120,34 +120,31 @@ act_packet_sync(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_packet_error(const HParseResult* p, void* user_data)
+_make_packet(bool has_dropped_samples,
+             const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
   pac->type = H_FIELD_UINT(0);
-  pac->error = H_FIELD_UINT(2);
+  if (has_dropped_samples) pac->dropped_samples = H_FIELD_UINT(1);
+  switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
+  case TT_ix_samples_n: pac->samples = *H_FIELD(ix_samples_n, 2); break;
+  case TT_UINT: pac->error = H_FIELD_UINT(2); break;
+  default: assert(false);
+  }
   return H_MAKE(ix_packet, pac);
 }
 
-static HParsedToken*
-_make_dropped_samples_packet(const HParseResult* p, void* user_data)
-{
-  ix_packet* pac;
+H_ACT_APPLY(_make_packet_dropped, _make_packet, true)
+H_ACT_APPLY(_make_packet_ndropped, _make_packet, false)
 
-  IX_UNUSED(user_data);
-  pac = H_ALLOC(ix_packet);
-  pac->type = H_FIELD_UINT(0);
-  pac->dropped_samples = H_FIELD_UINT(1);
-  pac->samples = *H_FIELD(ix_samples_n, 2);
-  return H_MAKE(ix_packet, pac);
-}
-
-static HAction act_packet_battery = _make_dropped_samples_packet;
-static HAction act_packet_drlref = _make_dropped_samples_packet;
-static HAction act_packet_acc = _make_dropped_samples_packet;
-static HAction act_packet_eeg4 = _make_dropped_samples_packet;
+static HAction act_packet_error = _make_packet_ndropped;
+static HAction act_packet_battery = _make_packet_ndropped;
+static HAction act_packet_drlref = _make_packet_ndropped;
+static HAction act_packet_acc = _make_packet_dropped;
+static HAction act_packet_eeg4 = _make_packet_dropped;
 
 IX_INITIALIZER(_pp_init_parser)
 {
