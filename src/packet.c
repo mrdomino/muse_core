@@ -153,7 +153,7 @@ IX_INITIALIZER(_pp_init_parser)
   H_RULE(nibble, h_bits(4, false));
   H_RULE(short_, h_with_endianness(MUSE_ENDIAN, h_uint16()));
   H_RULE(sample, h_bits(10, false));
-  H_RULE(word_, h_with_endianness(MUSE_ENDIAN, h_uint32()));
+  H_RULE(word, h_with_endianness(MUSE_ENDIAN, h_uint32()));
 #undef MUSE_ENDIAN
 
   H_AVRULE(type_acc, nibble);
@@ -186,8 +186,8 @@ IX_INITIALIZER(_pp_init_parser)
   H_ARULE(packet_battery,
           h_sequence(type_battery, flags_ndropped, data_battery, NULL));
   H_ARULE(packet_error,
-          h_sequence(type_error, flags_ndropped, word_, NULL));
-  H_AVRULE(packet_sync, word_);
+          h_sequence(type_error, flags_ndropped, word, NULL));
+  H_AVRULE(packet_sync, word);
 
   H_RULE(packet,
          h_choice(packet_acc,
