@@ -45,8 +45,8 @@ SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
  *
  * WARNING: channel bound checks are implemented with assertions that
  * compile to no-ops if NDEBUG is defined. Always validate user-supplied
- * channel offsets before calling ix_packet_*_ch, or else you may
- * inadvertently give users access to arbitrary program memory.
+ * channel offsets before calling ix_packet_ch, or else you may inadvertently
+ * give users access to arbitrary program memory.
  */
 SO_EXPORT uint16_t ix_packet_ch(const ix_packet* p, size_t channel);
 
