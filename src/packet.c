@@ -122,7 +122,7 @@ _make_packet(bool has_dropped_samples,
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
-  pac->type = H_FIELD_UINT(0);
+  pac->type = (ix_pac_type)H_FIELD_UINT(0);
   if (has_dropped_samples) pac->dropped_samples = H_FIELD_UINT(1);
   switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
   case TT_ix_samples_n: pac->samples = *H_FIELD(ix_samples_n, 2); break;
