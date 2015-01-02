@@ -81,21 +81,21 @@ inline parse_input bitpacked_samples(Args&&... args) {
   auto m = static_cast<size_t>(ceil(samples.size() * 10.0 / 8.0));
   auto values = parse_input();
   values.reserve(m);
-  // [11111111] | 0
-  // [11000000] | [00222222]
-  // [22220000] | [00003333]
-  // [33333300] | [00000044]
-  // [44444444] | 0
   auto sample = samples.cbegin();
   for (auto i = 0u; i < m; ++i) {
     uint8_t value, mask_b = 0, shift_b = 0;
     assert(sample != samples.cend());
     switch (i % 5) {
-    case 0: value = 0,              mask_b = 0xff, shift_b = 2; break;
-    case 1: value = *sample++ << 6, mask_b = 0x3f, shift_b = 4; break;
-    case 2: value = *sample++ << 4, mask_b = 0x0f, shift_b = 6; break;
-    case 3: value = *sample++ << 2, mask_b = 0x03, shift_b = 8; break;
-    case 4: value = *sample++; break;
+    case 0:                                             // [11111111]
+      value = 0,              mask_b = 0xff, shift_b = 2; break;
+    case 1:                                             // [11222222]
+      value = *sample++ << 6, mask_b = 0x3f, shift_b = 4; break;
+    case 2:                                             // [22223333]
+      value = *sample++ << 4, mask_b = 0x0f, shift_b = 6; break;
+    case 3:                                             // [33333344]
+      value = *sample++ << 2, mask_b = 0x03, shift_b = 8; break;
+    case 4:                                             // [44444444]
+      value = *sample++; break;
     default: assert(false);
     }
     if (mask_b && sample != samples.cend()) {
