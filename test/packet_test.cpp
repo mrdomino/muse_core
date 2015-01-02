@@ -320,7 +320,10 @@ TEST_F(PacketTest, ParseMultiplePackets) {
   buf = sync_packet() + acc_packet(0, 0, 0) + eeg_packet(511, 512, 53, 400)
                       + acc_packet(737, 20, 3)
                       + eeg_packet(1023, 1022, 1021, 1000)
-                      + sync_packet();
+                      + sync_packet()
+                      + drlref_packet(50, 60)
+                      + battery_packet(1, 2, 3, -1)
+                      + error_packet(0xabad1dea);
   auto pacs = vector<IxPacket>();
   auto begin = buf.cbegin();
   auto end = buf.cend();
@@ -332,7 +335,7 @@ TEST_F(PacketTest, ParseMultiplePackets) {
   }
   EXPECT_EQ(end, begin);
 
-  ASSERT_EQ(6u, pacs.size());
+  ASSERT_EQ(9u, pacs.size());
 
   EXPECT_EQ(IX_PAC_SYNC, pacs[0].type);
   EXPECT_EQ(IX_PAC_EEG, pacs[2].type);
@@ -341,6 +344,10 @@ TEST_F(PacketTest, ParseMultiplePackets) {
   EXPECT_EQ(737u, pacs[3].samples[0]);
   EXPECT_EQ(1022u, pacs[4].samples[1]);
   EXPECT_EQ(IX_PAC_SYNC, pacs[5].type);
+  EXPECT_EQ(IX_PAC_BATTERY, pacs[7].type);
+  EXPECT_EQ(-1, pacs[7].temp_c);
+  EXPECT_EQ(IX_PAC_ERROR, pacs[8].type);
+  EXPECT_EQ(0xabad1dea, pacs[8].error);
 }
 
 TEST_F(PacketTest, DroppedSamples) {
