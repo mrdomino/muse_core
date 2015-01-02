@@ -254,6 +254,12 @@ TEST_F(PacketTest, ParseFailures) {
   EXPECT_ANY_THROW(test_parse(""));
 }
 
+// Disabled: too slow
+TEST(PacketDeathTest, DISABLED_SegfaultOnNullBuf) {
+  auto nil_f = [](const ix_packet*, void*) {};
+  EXPECT_DEATH(ix_packet_parse(NULL, 1, nil_f, NULL), "");
+}
+
 TEST_F(PacketTest, ParsesSync) {
   buf = sync_packet();
   parse();

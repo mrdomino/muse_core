@@ -115,7 +115,7 @@ SO_EXPORT uint16_t ix_packet_dropped_samples(const ix_packet* p);
  *
  * Returns err == IX_OK, res.uin == offset of first unparsed byte on successful
  * parse. Calls pac_f once per packet parsed with the packet and the supplied
- * user_data.
+ * user_data. Must be called on non-NULL buf.
  */
 SO_EXPORT
 ix_result
