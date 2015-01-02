@@ -61,15 +61,16 @@ SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
 
 /*
  * Battery accessors.
+ *
+ * Although these are defined in terms of ix_packet_battery_ch, please always
+ * use the symbolic names for clarity's sake.
  */
-#define ix_packet_battery_percent(p) \
-  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 0)
-#define ix_packet_battery_fuel_gauge_mv(p) \
-  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 1)
-#define ix_packet_battery_adc_mv(p) \
-  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 2)
-#define ix_packet_battery_temp_c(p) \
-  ((int16_t)ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), 3))
+#define ix_packet_battery_ch(p, i) \
+  ix_packet_ch(_ix_assert_type(p, IX_PAC_BATTERY), i)
+#define ix_packet_battery_percent(p) ix_packet_battery_ch(p, 0)
+#define ix_packet_battery_fuel_gauge_mv(p) ix_packet_battery_ch(p, 1)
+#define ix_packet_battery_adc_mv(p) ix_packet_battery_ch(p, 2)
+#define ix_packet_battery_temp_c(p) ((int16_t)ix_packet_battery_ch(p, 3))
 
 /*
  * DRL/REF accessors.
