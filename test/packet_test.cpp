@@ -76,10 +76,10 @@ inline parse_input battery_packet(uint16_t pct, uint16_t fuel_mv,
 
 template <typename... Args>
 inline parse_input bitpacked_samples(Args&&... args) {
-  auto samples = std::array<uint16_t, sizeof...(Args)>{
-    {static_cast<uint16_t>(args)...}};
+  auto samples = array<uint16_t, sizeof...(Args)>{
+      {static_cast<uint16_t>(args)...}};
   auto m = static_cast<size_t>(ceil(samples.size() * 10.0 / 8.0));
-  auto values = std::vector<uint8_t>();
+  auto values = parse_input();
   values.reserve(m);
   // [11111111] | 0
   // [11000000] | [00222222]
