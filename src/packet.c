@@ -208,14 +208,13 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
   ix_result    ret;
 
   if (p) {
-    assert(p->ast->token_type == (HTokenType)TT_ix_packet);
     assert(p->bit_length % 8 == 0);
     ret = ix_r_uin(p->bit_length / 8);
     pac_f(H_CAST(ix_packet, p->ast), user_data);
     h_parse_result_free(p);
-    return ret;
   }
-  else return ix_r_err(IX_EBADSTR);
+  else ret = ix_r_err(IX_EBADSTR);
+  return ret;
 }
 
 
