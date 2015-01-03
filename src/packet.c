@@ -228,10 +228,7 @@ ix_packet_type(const ix_packet* p)
 
 uint32_t
 ix_packet_error(const ix_packet* p)
-{
-  assert(p->type == IX_PAC_ERROR);
-  return p->error;
-}
+{ return _ix_assert_type(p, IX_PAC_ERROR)->error; }
 
 uint16_t
 ix_packet_ch(const ix_packet* p, size_t channel)
