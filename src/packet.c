@@ -14,6 +14,14 @@
 #include <hammer/hammer.h>
 
 
+#ifndef H_VALIDATE_APPLY
+/* TODO(soon): move into glue.h */
+#define H_VALIDATE_APPLY(myvalidation, pvalidation, ...)        \
+  static bool myvalidation(HParseResult* p, void* user_data) {  \
+    return pvalidation(__VA_ARGS__, p, user_data);              \
+  }
+#endif
+
 typedef struct {
   uint16_t n;
   uint16_t data[4];
@@ -37,26 +45,23 @@ enum {
 
 static HParser *parser;
 
+static bool
+_uint_const_attr(uint64_t v, HParseResult* p, void* user_data)
+{
+  IX_UNUSED(user_data);
+  return H_CAST_UINT(p->ast) == v;
+}
 
-#define VALIDATE_UINT_PRED(N, P)                  \
-  static bool                                     \
-  validate_ ##N(HParseResult* p, void* user_data) \
-  {                                               \
-    IX_UNUSED(user_data);                         \
-    return P;                                     \
-  }
-
-#define ACT_UINT(N, X)                              \
-  static HParsedToken*                              \
-  act_ ##N(const HParseResult* p, void* user_data)  \
-  {                                                 \
-    IX_UNUSED(user_data);                           \
-    return H_MAKE_UINT(X);                          \
-  }
+static HParsedToken*
+_make_uint_const(uint64_t x, const HParseResult* p, void* user_data)
+{
+  IX_UNUSED(user_data);
+  return H_MAKE_UINT(x);
+}
 
 #define ACT_VALIDATE_TYPE(N, T, C)                          \
-  VALIDATE_UINT_PRED(type_ ##N, H_CAST_UINT(p->ast) == (C)) \
-  ACT_UINT(type_ ##N, T)
+  H_VALIDATE_APPLY(validate_type_ ##N, _uint_const_attr, C) \
+  H_ACT_APPLY(act_type_ ##N, _make_uint_const, T)
 
 ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
 ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
@@ -64,15 +69,13 @@ ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
 ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
 ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
-VALIDATE_UINT_PRED(flags_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0x8)
-VALIDATE_UINT_PRED(flags_no_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0)
-VALIDATE_UINT_PRED(packet_sync, H_CAST_UINT(p->ast) == 0x55aaffff)
-
-ACT_UINT(prefix_dropped, H_FIELD_UINT(1))
-
 #undef ACT_VALIDATE_TYPE
-#undef ACT_UINT
-#undef VALIDATE_UINT_PRED
+
+H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
+H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
+H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
+
+H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
 static HParsedToken*
 _make_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
