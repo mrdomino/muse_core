@@ -14,14 +14,6 @@
 #include <hammer/hammer.h>
 
 
-#ifndef H_VALIDATE_APPLY
-/* TODO(soon): move into glue.h */
-#define H_VALIDATE_APPLY(myvalidation, pvalidation, ...)        \
-  static bool myvalidation(HParseResult* p, void* user_data) {  \
-    return pvalidation(__VA_ARGS__, p, user_data);              \
-  }
-#endif
-
 typedef struct {
   uint16_t n;
   uint16_t data[4];
