@@ -82,7 +82,7 @@ act_prefix_dropped(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-act_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
+_make_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
                  void* user_data)
 {
   ix_samples_n *out;
@@ -98,10 +98,13 @@ act_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
   return H_MAKE(ix_samples_n, out);
 }
 
-H_ACT_APPLY(act_data_battery, act_ix_samples_n, p->ast)
-H_ACT_APPLY(act_samples_drlref, act_ix_samples_n, h_seq_index(p->ast, 0))
-H_ACT_APPLY(act_samples_acc, act_ix_samples_n, h_seq_index(p->ast, 0))
-H_ACT_APPLY(act_samples_eeg4, act_ix_samples_n, p->ast)
+H_ACT_APPLY(_make_samples_root, _make_ix_samples_n, p->ast)
+H_ACT_APPLY(_make_samples_first, _make_ix_samples_n, H_INDEX_TOKEN(p->ast, 0))
+
+static HAction act_samples_drlref = _make_samples_first;
+static HAction act_samples_acc = _make_samples_first;
+static HAction act_samples_eeg4 = _make_samples_root;
+static HAction act_data_battery = _make_samples_root;
 
 static HParsedToken*
 act_packet_sync(const HParseResult* p, void* user_data)
@@ -115,8 +118,8 @@ act_packet_sync(const HParseResult* p, void* user_data)
 }
 
 static HParsedToken*
-_make_packet(bool has_dropped_samples,
-             const HParseResult* p, void* user_data)
+_make_packet_generic(bool has_dropped_samples,
+                     const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
 
@@ -132,12 +135,12 @@ _make_packet(bool has_dropped_samples,
   return H_MAKE(ix_packet, pac);
 }
 
-H_ACT_APPLY(_make_packet_dropped, _make_packet, true)
-H_ACT_APPLY(_make_packet_ndropped, _make_packet, false)
+H_ACT_APPLY(_make_packet, _make_packet_generic, false)
+H_ACT_APPLY(_make_packet_dropped, _make_packet_generic, true)
 
-static HAction act_packet_error = _make_packet_ndropped;
-static HAction act_packet_battery = _make_packet_ndropped;
-static HAction act_packet_drlref = _make_packet_ndropped;
+static HAction act_packet_error = _make_packet;
+static HAction act_packet_battery = _make_packet;
+static HAction act_packet_drlref = _make_packet;
 static HAction act_packet_acc = _make_packet_dropped;
 static HAction act_packet_eeg4 = _make_packet_dropped;
 
