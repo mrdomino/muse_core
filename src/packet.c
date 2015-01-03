@@ -154,7 +154,7 @@ IX_INITIALIZER(_pp_init_parser)
 #endif
   H_RULE(nibble,
          h_with_endianness(BIT_BIG_ENDIAN, h_bits(4, false)));
-  H_RULE(short_,
+  H_RULE(short_,    /* TODO(someday): little endian shorts */
          h_with_endianness(BYTE_BIG_ENDIAN, h_uint16()));
   H_RULE(sample, h_bits(10, false));
   H_RULE(word, h_uint32());
