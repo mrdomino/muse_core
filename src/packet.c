@@ -96,37 +96,31 @@ static HAction act_samples_eeg4 = _make_samples_root;
 static HAction act_data_battery = _make_samples_root;
 
 static HParsedToken*
-act_packet_sync(const HParseResult* p, void* user_data)
-{
-  ix_packet *pac;
-
-  IX_UNUSED(user_data);
-  pac = H_ALLOC(ix_packet);
-  pac->type = IX_PAC_SYNC;
-  return H_MAKE(ix_packet, pac);
-}
-
-static HParsedToken*
-_make_packet_generic(bool has_dropped_samples,
+_make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
                      const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
-  pac->type = (ix_pac_type)H_FIELD_UINT(0);
+  pac->type = type;
   if (has_dropped_samples) pac->dropped_samples = H_FIELD_UINT(1);
-  switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
-  case TT_ix_samples_n: pac->samples = *H_FIELD(ix_samples_n, 2); break;
-  case TT_UINT: pac->error = H_FIELD_UINT(2); break;
-  default: assert(false);
+  if (has_data) {
+    switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
+    case TT_ix_samples_n: pac->samples = *H_FIELD(ix_samples_n, 2); break;
+    case TT_UINT: pac->error = H_FIELD_UINT(2); break;
+    default: assert(false);
+    }
   }
   return H_MAKE(ix_packet, pac);
 }
 
-H_ACT_APPLY(_make_packet, _make_packet_generic, false)
-H_ACT_APPLY(_make_packet_dropped, _make_packet_generic, true)
+H_ACT_APPLY(_make_packet, _make_packet_generic,
+            (ix_pac_type)H_FIELD_UINT(0), true, false)
+H_ACT_APPLY(_make_packet_dropped, _make_packet_generic,
+            (ix_pac_type)H_FIELD_UINT(0), true, true)
 
+H_ACT_APPLY(act_packet_sync, _make_packet_generic, IX_PAC_SYNC, false, false)
 static HAction act_packet_error = _make_packet;
 static HAction act_packet_battery = _make_packet;
 static HAction act_packet_drlref = _make_packet;
