@@ -149,12 +149,12 @@ IX_INITIALIZER(_pp_init_parser)
   assert(!inited);
   inited = 1;
 #endif
-#define MUSE_ENDIAN (BYTE_LITTLE_ENDIAN | BIT_BIG_ENDIAN)
-  H_RULE(nibble, h_bits(4, false));
-  H_RULE(short_, h_with_endianness(MUSE_ENDIAN, h_uint16()));
+  H_RULE(nibble,
+         h_with_endianness(BIT_BIG_ENDIAN, h_bits(4, false)));
+  H_RULE(short_,
+         h_with_endianness(BYTE_BIG_ENDIAN, h_uint16()));
   H_RULE(sample, h_bits(10, false));
-  H_RULE(word, h_with_endianness(MUSE_ENDIAN, h_uint32()));
-#undef MUSE_ENDIAN
+  H_RULE(word, h_uint32());
 
   H_AVRULE(type_acc, nibble);
   H_AVRULE(type_eeg, nibble);
@@ -190,13 +190,14 @@ IX_INITIALIZER(_pp_init_parser)
   H_AVRULE(packet_sync, word);
 
   H_RULE(packet,
-         h_choice(packet_acc,
-                  packet_eeg4,
-                  packet_drlref,
-                  packet_battery,
-                  packet_error,
-                  packet_sync,
-                  NULL));
+         h_with_endianness(BIT_LITTLE_ENDIAN | BYTE_LITTLE_ENDIAN,
+                           h_choice(packet_acc,
+                                    packet_eeg4,
+                                    packet_drlref,
+                                    packet_battery,
+                                    packet_error,
+                                    packet_sync,
+                                    NULL)));
   parser = packet;
 }
 

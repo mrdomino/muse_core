@@ -47,6 +47,13 @@ inline void append_little_endian_bytes(Container* c, Val const& v) {
   }
 }
 
+template <typename Container, typename Val>
+inline void append_big_endian_bytes(Container* c, Val const& v) {
+  for (auto i = 0u; i < sizeof(Val); ++i) {
+    c->push_back(v >> (sizeof(Val) - 1 - i) * 8 & 0xff);
+  }
+}
+
 inline parse_input sync_packet() {
   parse_input ret;
 
@@ -67,57 +74,52 @@ inline parse_input battery_packet(uint16_t pct, uint16_t fuel_mv,
   parse_input ret;
 
   ret.push_back(0xb << 4);
-  append_little_endian_bytes(&ret, pct);
-  append_little_endian_bytes(&ret, fuel_mv);
-  append_little_endian_bytes(&ret, adc_mv);
-  append_little_endian_bytes(&ret, temp_c);
+  append_big_endian_bytes(&ret, pct);
+  append_big_endian_bytes(&ret, fuel_mv);
+  append_big_endian_bytes(&ret, adc_mv);
+  append_big_endian_bytes(&ret, temp_c);
   return ret;
 }
 
-template <typename... Args>
-inline parse_input bitpacked_samples(Args&&... args) {
-  auto samples = array<uint16_t, sizeof...(Args)>{
-      {static_cast<uint16_t>(args)...}};
-  auto m = static_cast<size_t>(ceil(samples.size() * 10.0 / 8.0));
-  auto values = parse_input();
-  values.reserve(m);
-  auto sample = samples.cbegin();
-  for (auto i = 0u; i < m; ++i) {
-    uint8_t value, mask_b = 0, shift_b = 0;
-    assert(sample != samples.cend());
-    switch (i % 5) {
-    case 0:                                             // [11111111]
-      value = 0,              mask_b = 0xff, shift_b = 2; break;
-    case 1:                                             // [11222222]
-      value = *sample++ << 6, mask_b = 0x3f, shift_b = 4; break;
-    case 2:                                             // [22223333]
-      value = *sample++ << 4, mask_b = 0x0f, shift_b = 6; break;
-    case 3:                                             // [33333344]
-      value = *sample++ << 2, mask_b = 0x03, shift_b = 8; break;
-    case 4:                                             // [44444444]
-      value = *sample++; break;
-    default: assert(false);
-    }
-    if (mask_b && sample != samples.cend()) {
-      value |= *sample >> shift_b & mask_b;
-    }
-    values.push_back(value);
-  }
-  assert(sample == samples.cend());
-  return parse_input(values.begin(), values.end());
+inline parse_input bitpacked_samples(uint16_t ch1, uint16_t ch2) {
+  parse_input ret;
+
+  ret.push_back(ch1);
+  ret.push_back(ch1 >> 8 | ch2 << 2);
+  ret.push_back(ch2 >> 6);
+  return ret;
+}
+
+inline parse_input bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3) {
+  parse_input ret;
+
+  ret.push_back(ch1);
+  ret.push_back(ch1 >> 8 | ch2 << 2);
+  ret.push_back(ch2 >> 6 | ch3 << 4);
+  ret.push_back(ch3 >> 4);
+  return ret;
+}
+
+inline parse_input bitpacked_samples(uint16_t ch1, uint16_t ch2, uint16_t ch3,
+                                     uint16_t ch4) {
+  parse_input ret;
+
+  ret.push_back(ch1);
+  ret.push_back(ch1 >> 8 | ch2 << 2);
+  ret.push_back(ch2 >> 6 | ch3 << 4);
+  ret.push_back(ch3 >> 4 | ch4 << 6);
+  ret.push_back(ch4 >> 2);
+
+  return ret;
 }
 
 template <typename... Args,
           typename enable_if<sizeof...(Args) == 3>::type* = nullptr>
 inline parse_input acc_packet(uint16_t dropped, Args&&... args) {
   parse_input ret;
-  uint8_t prefix[3];
 
-  prefix[0] = 0xa << 4 | 1 << 3;
-  prefix[1] = dropped & 0xff;
-  prefix[2] = dropped >> 8;
-
-  for (auto b : prefix) { ret.push_back(b); }
+  ret.push_back(0xa << 4 | 1 << 3);
+  append_big_endian_bytes(&ret, dropped);
   return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
@@ -135,12 +137,9 @@ template <typename... Args,
           typename enable_if<sizeof...(Args) == 4>::type* = nullptr>
 inline parse_input eeg_packet(uint16_t dropped, Args&&... args) {
   parse_input ret;
-  uint8_t prefix[3];
 
-  prefix[0] = 0xe << 4 | 1 << 3;
-  prefix[1] = dropped & 0xff;
-  prefix[2] = dropped >> 8;
-  for (auto b : prefix) { ret.push_back(b); }
+  ret.push_back(0xe << 4 | 1 << 3);
+  append_big_endian_bytes(&ret, dropped);
   return ret + bitpacked_samples(forward<Args>(args)...);
 }
 
