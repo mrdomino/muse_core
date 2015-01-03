@@ -46,13 +46,17 @@ static HParser *parser;
     return P;                                     \
   }
 
+#define ACT_UINT(N, X)                              \
+  static HParsedToken*                              \
+  act_ ##N(const HParseResult* p, void* user_data)  \
+  {                                                 \
+    IX_UNUSED(user_data);                           \
+    return H_MAKE_UINT(X);                          \
+  }
+
 #define ACT_VALIDATE_TYPE(N, T, C)                          \
   VALIDATE_UINT_PRED(type_ ##N, H_CAST_UINT(p->ast) == (C)) \
-  static HParsedToken*                                      \
-  act_type_ ##N(const HParseResult* p, void* user_data) {   \
-    IX_UNUSED(user_data);                                   \
-    return H_MAKE_UINT(T);                                  \
-  }
+  ACT_UINT(type_ ##N, T)
 
 ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
 ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
@@ -61,25 +65,14 @@ ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
 ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
 VALIDATE_UINT_PRED(flags_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0x8)
-VALIDATE_UINT_PRED(flags_ndropped, (H_CAST_UINT(p->ast) & 0x8) == 0)
+VALIDATE_UINT_PRED(flags_no_dropped, (H_CAST_UINT(p->ast) & 0x8) == 0)
 VALIDATE_UINT_PRED(packet_sync, H_CAST_UINT(p->ast) == 0x55aaffff)
 
+ACT_UINT(prefix_dropped, H_FIELD_UINT(1))
+
 #undef ACT_VALIDATE_TYPE
+#undef ACT_UINT
 #undef VALIDATE_UINT_PRED
-
-static HParsedToken*
-act_flags_ndropped(const HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return H_MAKE_UINT(0);
-}
-
-static HParsedToken*
-act_prefix_dropped(const HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return H_MAKE_UINT(H_FIELD_UINT(1));
-}
 
 static HParsedToken*
 _make_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
@@ -166,9 +159,10 @@ IX_INITIALIZER(_pp_init_parser)
   H_AVRULE(type_error, nibble);
 
   H_VRULE(flags_dropped, nibble);
-  H_AVRULE(flags_ndropped, nibble);
+  H_VRULE(flags_no_dropped, nibble);
+  H_RULE(prefix_no_dropped, flags_no_dropped);
   H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
-  H_RULE(flags, h_choice(prefix_dropped, flags_ndropped, NULL));
+  H_RULE(prefix, h_choice(prefix_no_dropped, prefix_dropped, NULL));
 
   H_ARULE(data_battery, h_repeat_n(short_, 4));
   H_ARULE(samples_drlref,
@@ -177,19 +171,19 @@ IX_INITIALIZER(_pp_init_parser)
           h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
   H_ARULE(samples_eeg4, h_repeat_n(sample, 4));
 
-  H_ARULE(packet_acc, h_sequence(type_acc, flags, samples_acc, NULL));
+  H_ARULE(packet_acc, h_sequence(type_acc, prefix, samples_acc, NULL));
 
   /* TODO(soon): configurable number of EEG channels */
-  H_ARULE(packet_eeg4, h_sequence(type_eeg, flags, samples_eeg4, NULL));
+  H_ARULE(packet_eeg4, h_sequence(type_eeg, prefix, samples_eeg4, NULL));
 
   /* TODO(soon): compressed EEG */
 
   H_ARULE(packet_drlref,
-          h_sequence(type_drlref, flags_ndropped, samples_drlref, NULL));
+          h_sequence(type_drlref, prefix_no_dropped, samples_drlref, NULL));
   H_ARULE(packet_battery,
-          h_sequence(type_battery, flags_ndropped, data_battery, NULL));
+          h_sequence(type_battery, prefix_no_dropped, data_battery, NULL));
   H_ARULE(packet_error,
-          h_sequence(type_error, flags_ndropped, word, NULL));
+          h_sequence(type_error, prefix_no_dropped, word, NULL));
   H_AVRULE(packet_sync, word);
 
   H_RULE(packet,
