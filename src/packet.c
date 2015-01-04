@@ -217,18 +217,7 @@ ix_packet_error(const ix_packet* p)
 uint16_t
 ix_packet_ch(const ix_packet* p, size_t channel)
 {
-#ifndef NDEBUG
-  size_t nch;
-
-  switch (ix_packet_type(p)) {
-  case IX_PAC_BATTERY:       /*FALLTHROUGH*/
-  case IX_PAC_EEG:           nch = 4; break;
-  case IX_PAC_ACCELEROMETER: nch = 3; break;
-  case IX_PAC_DRLREF:        nch = 2; break;
-  default:                   nch = 0;
-  }
-  assert(channel < nch);
-#endif
+  assert(channel < p->samples.n);
   return p->samples.data[channel];
 }
 
