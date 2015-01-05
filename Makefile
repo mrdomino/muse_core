@@ -27,8 +27,8 @@ DESTDIR = dist
 LIBDIR = $(DESTDIR)$(PREFIX)/lib
 INCDIR = $(DESTDIR)$(PREFIX)/include
 
-INCS = $(_I)$(INCDIR) $(_I)$(BUILDINCDIR)
-LIBS = $(_L)$(LIBDIR) $(_L)$(BUILDLIBDIR) -lhammer
+INCS = $(_I)$(BUILDINCDIR)
+LIBS = $(_L)$(BUILDLIBDIR) -lhammer
 
 CFLAGS += $(INCS)
 CXXFLAGS += $(INCS)
@@ -39,15 +39,12 @@ MUSE_CORE_MOD = connect packet r result version
 
 MUSE_CORE_INC = connect defs muse_core packet result serial util version
 
-MUSE_CORE_INCDIR = $(INCDIR)/muse_core
-
 MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
-MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(MUSE_CORE_INCDIR)/$(inc).h)
+MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(BUILDINCDIR)/muse_core/$(inc).h)
 MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 
-# TODO(soon): build into builddir, make install copy to destdir
-MUSE_CORE_S = $(LIBDIR)/$(LIB)muse_core.$S
-MUSE_CORE_A = $(LIBDIR)/$(LIB)muse_core.$A
+MUSE_CORE_A = $(BUILDLIBDIR)/$(LIB)muse_core.$A
+MUSE_CORE_S = $(BUILDLIBDIR)/$(LIB)muse_core.$S
 
 all: options dirs deps copy-headers lib
 
@@ -66,12 +63,15 @@ options:
 	@echo "SKIP_TESTS         = $(SKIP_TESTS)"
 	@echo
 
-DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S)/src $(BUILDDIR_A)/src \
-       $(BUILDDIR_A)/test $(BUILDDIR_A)/examples $(LIBDIR) $(MUSE_CORE_INCDIR)
+DIRS = $(BUILDLIBDIR) $(BUILDINCDIR)/muse_core \
+       $(BUILDDIR_S)/src $(BUILDDIR_A)/src \
+       $(BUILDDIR_A)/test $(BUILDDIR_A)/examples \
+
+DISTDIRS = $(INCDIR)/muse_core $(LIBDIR)
 
 dirs: $(DIRS)
 
-$(DIRS):
+$(DIRS) $(DISTDIRS):
 	@echo mkdir $@
 	@mkdir -p $@
 
@@ -79,41 +79,62 @@ lib: $(MUSE_CORE_S) $(MUSE_CORE_A)
 
 copy-headers: $(MUSE_CORE_H)
 
-$(MUSE_CORE_S): $(MUSE_CORE_S_O)
+$(MUSE_CORE_S): $(MUSE_CORE_S_O) $(BUILDLIBDIR)
 	@echo ld $(MUSE_CORE_S)
 	@$(LD) -shared -o $(MUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S_O) \
 	  $(LDFLAGS)
 
-$(MUSE_CORE_A): $(MUSE_CORE_A_O)
+$(MUSE_CORE_A): $(MUSE_CORE_A_O) $(BUILDLIBDIR)
 	@echo ar $(MUSE_CORE_A)
 	@ar rcs $(MUSE_CORE_A) $(MUSE_CORE_A_O)
 
-$(MUSE_CORE_INCDIR)/%.h: $(SRCDIR)/%.h
+$(BUILDINCDIR)/muse_core/%.h: $(SRCDIR)/%.h $(BUILDINCDIR)/muse_core
 	@echo copying $@
 	@cp $< $@
 
 # TODO(soon): autogenned header dependencies
 
-$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
+$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H) $(BUILDDIR_S)/src
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS_S) $(CFLAGS) $<
 
-$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
+$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H) $(BUILDDIR_A)/src
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS) $<
 
 clean:
 	rm -rf $(BUILDDIR_A) $(BUILDDIR_S)
-	rm -f benchmark unittests
+	rm -f benchmark unittests $(MUSE_CORE_A) $(MUSE_CORE_S)
 
-distclean: clean
-	git clean -xdf
-	git submodule foreach git clean -xdf
+DIST = \
+  $(foreach inc,$(MUSE_CORE_INC),$(INCDIR)/muse_core/$(inc).h) \
+  $(LIBDIR)/$(LIB)muse_core.$A \
+  $(LIBDIR)/$(LIB)muse_core.$S
 
-install:
-	make dirs copy-headers lib DESTDIR=
+dist: $(DIST)
 
-.PHONY: all clean copy-headers default deps dirs distclean install lib options
+$(DIST): $(DISTDIRS)
+
+$(INCDIR)/muse_core/%.h: $(BUILDINCDIR)/muse_core/%.h $(INCDIR)/muse_core
+	@echo copying $@
+	@cp $< $@
+
+$(LIBDIR)/%: $(BUILDLIBDIR)/% $(BUILDLIBDIR)
+	@echo copying $@
+	@cp $< $@
+
+distclean:
+	rm -rf $(DIST)
+	-rmdir -p $(DISTDIRS)
+
+install: copy-headers lib
+	make dist DESTDIR=
+
+uninstall:
+	make distclean DESTDIR=
+
+.PHONY: all clean copy-headers default deps dirs dist distclean install lib \
+        mark options uninstall
 
 
 BENCHMARK_A_O = $(BUILDDIR_A)/test/packet_benchmark.o
@@ -121,7 +142,7 @@ BENCHMARK_A_O = $(BUILDDIR_A)/test/packet_benchmark.o
 mark: benchmark
 	./benchmark
 
-benchmark: dirs $(BENCHMARK_A_O) lib $(HAMMER_A)
+benchmark: $(BENCHMARK_A_O) lib $(HAMMER_A)
 	@echo c++ld benchmark
 	@$(CXXLD) -o benchmark \
 	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
@@ -133,7 +154,7 @@ benchmark: dirs $(BENCHMARK_A_O) lib $(HAMMER_A)
 
 EXAMPLES_A_O = $(BUILDDIR_A)/examples/internal_usage.o
 
-$(BUILDDIR_A)/examples/%.o: examples/%.cpp
+$(BUILDDIR_A)/examples/%.o: examples/%.cpp $(BUILDDIR_A)/examples
 	@echo c++ $@
 	@$(CXX) -c -o $@ $(CXXFLAGS) $<
 
