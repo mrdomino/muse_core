@@ -12,8 +12,8 @@
 //
 // We use this pattern internally, and if you are developing an SDK you may
 // consider doing so as well, in order to allow people to link against our
-// SDK without having to also install libmuse_core while also allowing people
-// to link against libmuse_core separately if they choose to do so. If you are
+// SDK without having to also install muse_core while also allowing people to
+// link against muse_core separately if they choose to do so. If you are
 // considering doing this, drop us a line at <sdk@interaxon.ca> to let us know.
 //
 
