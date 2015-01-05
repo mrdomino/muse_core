@@ -188,9 +188,9 @@ IX_INITIALIZER(_pp_init_parser)
                            h_choice(packet_acc,
                                     packet_eeg4,
                                     packet_drlref,
+                                    packet_sync,
                                     packet_battery,
                                     packet_error,
-                                    packet_sync,
                                     NULL)));
   g_ix_packet = packet;
 }
