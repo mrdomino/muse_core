@@ -104,7 +104,7 @@ $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 
 clean:
 	rm -rf $(BUILDDIR_A) $(BUILDDIR_S)
-	rm -f unittests
+	rm -f benchmark unittests
 
 distclean: clean
 	git clean -xdf
