@@ -36,7 +36,7 @@ enum {
 };
 
 
-static HParser *parser;
+SO_EXPORT HParser *g_ix_packet;
 
 static bool
 _uint_const_attr(uint64_t v, HParseResult* p, void* user_data)
@@ -185,14 +185,14 @@ IX_INITIALIZER(_pp_init_parser)
                                     packet_error,
                                     packet_sync,
                                     NULL)));
-  parser = packet;
+  g_ix_packet = packet;
 }
 
 ix_result
 ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
                 void* user_data)
 {
-  HParseResult *p = h_parse(parser, buf, len);
+  HParseResult *p = h_parse(g_ix_packet, buf, len);
   ix_result    ret;
 
   if (p) {
