@@ -153,10 +153,11 @@ IX_INITIALIZER(_pp_init_parser)
 
   H_VRULE(flags_dropped, nibble);
   H_VRULE(flags_no_dropped, nibble);
-  H_ARULE(prefix_no_dropped, flags_no_dropped);
+  H_RULE(prefix_no_dropped, flags_no_dropped);
   H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
   H_RULE(prefix_maybe_dropped,
-         h_choice(prefix_no_dropped, prefix_dropped, NULL));
+         h_choice(h_action(prefix_no_dropped, act_prefix_no_dropped, NULL),
+                  prefix_dropped, NULL));
 
   H_ARULE(data_battery, h_repeat_n(short_, 4));
   H_ARULE(samples_drlref,
