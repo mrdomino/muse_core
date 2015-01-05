@@ -14,7 +14,13 @@
 #include <hammer/hammer.h>
 
 
-enum { MAX_CHANNELS = 4u };
+enum {
+  DRLREF_CHANNELS = 2u,
+  ACC_CHANNELS = 3u,
+  BAT_CHANNELS = 4u,
+  EEG4_CHANNELS = 4u,
+  MAX_CHANNELS = 4u
+};
 
 typedef struct {
   uint16_t n;
@@ -159,12 +165,18 @@ IX_INITIALIZER(_pp_init_parser)
          h_choice(h_action(prefix_no_dropped, act_prefix_no_dropped, NULL),
                   prefix_dropped, NULL));
 
-  H_ARULE(data_battery, h_repeat_n(short_, 4));
+  H_ARULE(data_battery,
+          h_repeat_n(short_, BAT_CHANNELS));
   H_ARULE(samples_drlref,
-          h_sequence(h_repeat_n(sample, 2), h_ignore(h_bits(4, false)), NULL));
+          h_sequence(h_repeat_n(sample, DRLREF_CHANNELS),
+                     h_ignore(h_bits(4, false)),
+                     NULL));
   H_ARULE(samples_acc,
-          h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
-  H_ARULE(samples_eeg4, h_repeat_n(sample, 4));
+          h_sequence(h_repeat_n(sample, ACC_CHANNELS),
+                     h_ignore(h_bits(2, false)),
+                     NULL));
+  H_ARULE(samples_eeg4,
+          h_repeat_n(sample, EEG4_CHANNELS));
 
   H_ARULE(packet_acc,
           h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
