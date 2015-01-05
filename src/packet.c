@@ -43,8 +43,15 @@ enum {
   TT_ix_samples_n,
 };
 
+#define _ACT_VALIDATE_TYPE(N, T, C)                         \
+  H_VALIDATE_APPLY(validate_type_ ##N, _uint_const_attr, C) \
+  H_ACT_APPLY(act_type_ ##N, _make_uint_const, T)
+#define _SRULE(N, P) H_RULE(N, h_action(P, act_ix_samples_n, NULL))
+#define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
+#define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
 
 SO_EXPORT HParser *g_ix_packet;
+
 
 static bool
 _uint_const_attr(uint64_t v, const HParseResult* p, void* user_data)
@@ -60,17 +67,11 @@ _make_uint_const(uint64_t x, const HParseResult* p, void* user_data)
   return H_MAKE_UINT(x);
 }
 
-#define ACT_VALIDATE_TYPE(N, T, C)                          \
-  H_VALIDATE_APPLY(validate_type_ ##N, _uint_const_attr, C) \
-  H_ACT_APPLY(act_type_ ##N, _make_uint_const, T)
-
-ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
-ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
-ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
-ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
-ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
-
-#undef ACT_VALIDATE_TYPE
+_ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
+_ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
+_ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
+_ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
+_ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
 
 H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
 H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
@@ -151,8 +152,6 @@ IX_INITIALIZER(_pp_init_parser)
          h_choice(h_action(prefix_no_dropped, act_prefix_no_dropped, NULL),
                   prefix_dropped, NULL));
 
-#define _SRULE(N, P) H_RULE(N, h_action(P, act_ix_samples_n, NULL))
-
   _SRULE(data_battery,
          h_repeat_n(short_, BAT_CHANNELS));
   _SRULE(samples_drlref,
@@ -170,31 +169,19 @@ IX_INITIALIZER(_pp_init_parser)
   _SRULE(samples_eeg4,
          h_repeat_n(sample, EEG4_CHANNELS));
 
-#undef _SRULE
-
   H_AVRULE(packet_sync, word);
-
-#define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
-#define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
-
   _PRULE_D(packet_acc,
            h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
-
   /* TODO(soon): configurable number of EEG channels */
   _PRULE_D(packet_eeg4,
            h_sequence(type_eeg, prefix_maybe_dropped, samples_eeg4, NULL));
-
   /* TODO(soon): compressed EEG */
-
   _PRULE(packet_drlref,
          h_sequence(type_drlref, prefix_no_dropped, samples_drlref, NULL));
   _PRULE(packet_battery,
           h_sequence(type_battery, prefix_no_dropped, data_battery, NULL));
   _PRULE(packet_error,
           h_sequence(type_error, prefix_no_dropped, word, NULL));
-
-#undef _PRULE
-#undef _PRULE_D
 
   H_RULE(packet,
          h_with_endianness(BIT_LITTLE_ENDIAN | BYTE_LITTLE_ENDIAN,
