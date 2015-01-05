@@ -14,7 +14,6 @@
 typedef enum _ix_err {
   IX_OK,
   IX_EMOREDATA,
-  IX_ECAPACITY,
   IX_EBADSTR,
   IX_EBADVER,
 } ix_err;
