@@ -1,5 +1,24 @@
 /* Copyright 2014 Interaxon, Inc. */
 
+/*
+ * This file defines parsers for all the Muse packet types.
+ *
+ * The best strategy for understanding it is to start with _ix_packet_init. The
+ * various RULE macros are hammer preprocessor magic -- see hammer/glue.h or
+ * the hammer docs if you're curious, or just read them all as saying that the
+ * thing on the left is constructed out of the thing or things on the right.
+ *
+ * Then, compare the data types at the top of the file with the functions
+ * and preprocessor macros before _ix_packet_init. These all describe how to
+ * build an ix_packet structure out of the various top-level packet parsers.
+ * Crucially, the actions only ever get called on successful parse results, so
+ * we don't need to make sure that e.g. a DRL/REF packet has 2 sample fields --
+ * it's defined to by construction.
+ *
+ * Given all that, ix_packet_parse is stupidly trivial. The rest of the file is
+ * just accessors for use in user callbacks.
+ */
+
 #ifndef IX_MUSE_CORE_H_
 #include <stddef.h>
 #include <stdint.h>
@@ -44,11 +63,17 @@ struct _ix_packet {
   };
 };
 
+/*
+ * Hammer token types -- used by H_MAKE, H_CAST, H_FIELD, etc.
+ */
 enum {
   TT_ix_packet = TT_USER,
   TT_ix_samples_n,
 };
 
+/*
+ * Action and validation to match packet type codes with our own enum values.
+ */
 #define _ACT_VALIDATE_TYPE(N, T, C)                         \
   H_VALIDATE_APPLY(validate_type_ ##N, _uint_const_attr, C) \
   H_ACT_APPLY(act_type_ ##N, _make_uint_const, T)
@@ -56,8 +81,20 @@ enum {
 #define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
 #define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
 
+/*
+ * Top-level packet parser. Exported for use in benchmarking code, but not
+ * mentioned in the public API. Clients should never use this directly.
+ */
 SO_EXPORT HParser *g_ix_packet;
 
+
+/*
+ * Actions and validation functions.
+ *
+ * These are mostly reusable across a bunch of different parsers. If they have
+ * arguments before the HParseResult, those arguments are designed to be filled
+ * by H_ACT_APPLY or H_VALIDATE_APPLY.
+ */
 
 static bool
 _uint_const_attr(uint64_t v, const HParseResult* p, void* user_data)
@@ -82,6 +119,10 @@ act_ix_samples_n(const HParseResult* p, void* user_data)
   IX_UNUSED(user_data);
   out = H_ALLOC(ix_samples_n);
   out->n = h_seq_len(p->ast);
+  /*
+   * Just a sanity check to make sure we haven't messed up in our parse rules,
+   * e.g. by adding a wider packet type and forgetting to bump MAX_CHANNELS.
+   */
   assert(out->n <= MAX_CHANNELS);
   for (i = 0; i < out->n; i++) {
     out->data[i] = H_FIELD_UINT(i);
@@ -130,7 +171,7 @@ H_ACT_APPLY(act_ix_packet_no_dropped, _make_packet_generic,
 H_ACT_APPLY(act_ix_packet_maybe_dropped, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0), true, true)
 
-IX_INITIALIZER(_pp_init_parser)
+IX_INITIALIZER(_ix_packet_init)
 {
 #ifndef NDEBUG
   static int inited;
