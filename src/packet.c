@@ -80,7 +80,7 @@ H_ACT_APPLY(act_prefix_no_dropped, _make_uint_const, 0)
 H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
 static HParsedToken*
-_make_ix_samples_n(const HParseResult* p, void* user_data)
+act_ix_samples_n(const HParseResult* p, void* user_data)
 {
   ix_samples_n *out;
   uint8_t      i;
@@ -94,11 +94,6 @@ _make_ix_samples_n(const HParseResult* p, void* user_data)
   }
   return H_MAKE(ix_samples_n, out);
 }
-
-static HAction act_samples_drlref = _make_ix_samples_n;
-static HAction act_samples_acc = _make_ix_samples_n;
-static HAction act_samples_eeg4 = _make_ix_samples_n;
-static HAction act_data_battery = _make_ix_samples_n;
 
 static HParsedToken*
 _make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
@@ -161,22 +156,26 @@ IX_INITIALIZER(_pp_init_parser)
          h_choice(h_action(prefix_no_dropped, act_prefix_no_dropped, NULL),
                   prefix_dropped, NULL));
 
-  H_ARULE(data_battery,
-          h_repeat_n(short_, BAT_CHANNELS));
-  H_ARULE(samples_drlref,
-          h_action(
-              h_sequence(h_repeat_n(sample, DRLREF_CHANNELS),
-                         h_ignore(h_bits(4, false)),
-                         NULL),
-              h_act_first, NULL));
-  H_ARULE(samples_acc,
-          h_action(
-              h_sequence(h_repeat_n(sample, ACC_CHANNELS),
-                         h_ignore(h_bits(2, false)),
-                         NULL),
-              h_act_first, NULL));
-  H_ARULE(samples_eeg4,
-          h_repeat_n(sample, EEG4_CHANNELS));
+#define _SRULE(N, P) H_RULE(N, h_action(P, act_ix_samples_n, NULL))
+
+  _SRULE(data_battery,
+         h_repeat_n(short_, BAT_CHANNELS));
+  _SRULE(samples_drlref,
+         h_action(
+             h_sequence(h_repeat_n(sample, DRLREF_CHANNELS),
+                        h_ignore(h_bits(4, false)),
+                        NULL),
+             h_act_first, NULL));
+  _SRULE(samples_acc,
+         h_action(
+             h_sequence(h_repeat_n(sample, ACC_CHANNELS),
+                        h_ignore(h_bits(2, false)),
+                        NULL),
+             h_act_first, NULL));
+  _SRULE(samples_eeg4,
+         h_repeat_n(sample, EEG4_CHANNELS));
+
+#undef _SRULE
 
   H_ARULE(packet_acc,
           h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
