@@ -14,9 +14,11 @@
 #include <hammer/hammer.h>
 
 
+enum { MAX_CHANNELS = 4u };
+
 typedef struct {
   uint16_t n;
-  uint16_t data[4];
+  uint16_t data[MAX_CHANNELS];
 } ix_samples_n;
 
 struct _ix_packet {
@@ -81,7 +83,7 @@ _make_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
   IX_UNUSED(user_data);
   out = H_ALLOC(ix_samples_n);
   out->n = h_seq_len(sam);
-  assert(out->n <= 4);
+  assert(out->n <= MAX_CHANNELS);
   for (i = 0; i < out->n; i++) {
     out->data[i] = H_INDEX_UINT(sam, i);
   }
