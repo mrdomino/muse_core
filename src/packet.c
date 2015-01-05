@@ -72,11 +72,9 @@ _ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
 _ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
 _ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
 _ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
-
 H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
 H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
 H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
-
 H_ACT_APPLY(act_prefix_no_dropped, _make_uint_const, 0)
 H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
