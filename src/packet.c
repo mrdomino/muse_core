@@ -72,7 +72,7 @@ H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
 static HParsedToken*
 _make_ix_samples_n(const HParsedToken* sam, const HParseResult* p,
-                 void* user_data)
+                   void* user_data)
 {
   ix_samples_n *out;
   uint8_t      i;
