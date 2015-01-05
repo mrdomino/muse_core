@@ -79,12 +79,12 @@ lib: $(MUSE_CORE_S) $(MUSE_CORE_A)
 
 copy-headers: $(MUSE_CORE_H)
 
-$(MUSE_CORE_S): $(MUSE_CORE_S_O) $(BUILDLIBDIR)
+$(MUSE_CORE_S): $(MUSE_CORE_S_O)
 	@echo ld $(MUSE_CORE_S)
 	@$(LD) -shared -o $(MUSE_CORE_S) $(CFLAGS_S) $(CFLAGS) $(MUSE_CORE_S_O) \
 	  $(LDFLAGS)
 
-$(MUSE_CORE_A): $(MUSE_CORE_A_O) $(BUILDLIBDIR)
+$(MUSE_CORE_A): $(MUSE_CORE_A_O)
 	@echo ar $(MUSE_CORE_A)
 	@ar rcs $(MUSE_CORE_A) $(MUSE_CORE_A_O)
 
@@ -94,11 +94,11 @@ $(BUILDINCDIR)/muse_core/%.h: $(SRCDIR)/%.h $(BUILDINCDIR)/muse_core
 
 # TODO(soon): autogenned header dependencies
 
-$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H) $(BUILDDIR_S)/src
+$(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS_S) $(CFLAGS) $<
 
-$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H) $(BUILDDIR_A)/src
+$(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@echo cc $@
 	@$(CC) -c -o $@ $(CFLAGS) $<
 
@@ -111,15 +111,13 @@ DIST = \
   $(LIBDIR)/$(LIB)muse_core.$A \
   $(LIBDIR)/$(LIB)muse_core.$S
 
-dist: $(DIST)
+dist: $(DISTDIRS) $(DIST)
 
-$(DIST): $(DISTDIRS)
-
-$(INCDIR)/muse_core/%.h: $(BUILDINCDIR)/muse_core/%.h $(INCDIR)/muse_core
+$(INCDIR)/muse_core/%.h: $(BUILDINCDIR)/muse_core/%.h
 	@echo copying $@
 	@cp $< $@
 
-$(LIBDIR)/%: $(BUILDLIBDIR)/% $(BUILDLIBDIR)
+$(LIBDIR)/%: $(BUILDLIBDIR)/%
 	@echo copying $@
 	@cp $< $@
 
@@ -127,7 +125,7 @@ distclean:
 	rm -rf $(DIST)
 	-rmdir -p $(DISTDIRS)
 
-install: copy-headers lib
+install: dirs copy-headers lib
 	make dist DESTDIR=
 
 uninstall:
@@ -139,10 +137,10 @@ uninstall:
 
 BENCHMARK_A_O = $(BUILDDIR_A)/test/packet_benchmark.o
 
-mark: benchmark
+mark: dirs benchmark
 	./benchmark
 
-benchmark: $(BENCHMARK_A_O) lib $(HAMMER_A)
+benchmark: $(BENCHMARK_A_O) $(MUSE_CORE_S) $(HAMMER_A)
 	@echo c++ld benchmark
 	@$(CXXLD) -o benchmark \
 	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
@@ -154,7 +152,7 @@ benchmark: $(BENCHMARK_A_O) lib $(HAMMER_A)
 
 EXAMPLES_A_O = $(BUILDDIR_A)/examples/internal_usage.o
 
-$(BUILDDIR_A)/examples/%.o: examples/%.cpp $(BUILDDIR_A)/examples
+$(BUILDDIR_A)/examples/%.o: examples/%.cpp
 	@echo c++ $@
 	@$(CXX) -c -o $@ $(CXXFLAGS) $<
 
@@ -175,7 +173,7 @@ all: test
 
 .PHONY: test
 
-test: unittests
+test: dirs unittests
 	@echo unittests
 	@./unittests
 
