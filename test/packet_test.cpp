@@ -350,6 +350,13 @@ TEST_F(PacketTest, DroppedSamples) {
   parse();
   EXPECT_EQ(IX_PAC_EEG, p.type);
   EXPECT_EQ(1337u, p.dropped_samples);
+
+  buf = eeg_packet(1u, 2u, 3u, 4u);
+  parse();
+  EXPECT_EQ(0u, p.dropped_samples);
+
+  buf = acc_packet(1u, 2u, 3u);
+  EXPECT_EQ(0u, p.dropped_samples);
 }
 
 TEST_F(PacketTest, ParsesDrlRef) {
