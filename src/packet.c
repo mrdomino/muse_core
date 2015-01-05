@@ -41,7 +41,7 @@ enum {
 SO_EXPORT HParser *g_ix_packet;
 
 static bool
-_uint_const_attr(uint64_t v, HParseResult* p, void* user_data)
+_uint_const_attr(uint64_t v, const HParseResult* p, void* user_data)
 {
   IX_UNUSED(user_data);
   return H_CAST_UINT(p->ast) == v;
