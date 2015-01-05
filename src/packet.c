@@ -31,14 +31,16 @@ typedef struct {
   uint16_t data[MAX_CHANNELS];
 } ix_samples_n;
 
+struct _samples_dropped {
+  ix_samples_n samples;
+  uint16_t     dropped;
+};
+
 struct _ix_packet {
   ix_pac_type  type;
   union {
-    struct {
-      uint16_t     dropped_samples;
-      ix_samples_n samples;
-    };
-    uint32_t error;
+    struct _samples_dropped samples_dropped;
+    uint32_t                error;
   };
 };
 
@@ -96,11 +98,15 @@ _make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
   pac->type = type;
-  if (has_dropped_samples) pac->dropped_samples = H_FIELD_UINT(1);
+  if (has_dropped_samples) pac->samples_dropped.dropped = H_FIELD_UINT(1);
   if (has_data) {
     switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
-    case TT_ix_samples_n: pac->samples = *H_FIELD(ix_samples_n, 2); break;
-    case TT_UINT: pac->error = H_FIELD_UINT(2); break;
+    case TT_ix_samples_n:
+      pac->samples_dropped.samples = *H_FIELD(ix_samples_n, 2);
+      break;
+    case TT_UINT:
+      pac->error = H_FIELD_UINT(2);
+      break;
     default: assert(false);
     }
   }
@@ -225,13 +231,13 @@ ix_packet_error(const ix_packet* p)
 uint16_t
 ix_packet_ch(const ix_packet* p, size_t channel)
 {
-  assert(channel < p->samples.n);
-  return p->samples.data[channel];
+  assert(channel < p->samples_dropped.samples.n);
+  return p->samples_dropped.samples.data[channel];
 }
 
 uint16_t
 ix_packet_dropped_samples(const ix_packet* p)
 {
   assert(p->type == IX_PAC_ACCELEROMETER || p->type == IX_PAC_EEG);
-  return p->dropped_samples;
+  return p->samples_dropped.dropped;
 }
