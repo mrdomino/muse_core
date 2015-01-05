@@ -1,11 +1,15 @@
 /* Copyright 2014 Interaxon, Inc. */
 
+#ifndef IX_MUSE_CORE_H_
 #include <stdint.h>
 #include "defs.h"
 #include "result.h"
+#endif
 
+#ifndef IX_INTERNAL_H_
 #include <stddef.h>
 #include "util.h"
+#endif
 
 #include <assert.h>
 

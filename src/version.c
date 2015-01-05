@@ -1,18 +1,23 @@
 /* Copyright 2014 Interaxon, Inc. */
 
+#ifndef IX_MUSE_CORE_H_
+#include <stddef.h>
+#include <stdint.h>
+#include "defs.h"
+#include "result.h"
+#include "version.h"
+#endif
+
+#ifndef IX_INTERNAL_H_
+#include "r.h"
+#include "defs_internal.h"
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <hammer/glue.h>
 #include <hammer/hammer.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <string.h>
-#include "defs.h"
-#include "result.h"
-#include "version.h"
-#include "r.h"
-#include "defs_internal.h"
-
 
 static const char muse_spc[] = { 'M', 'U', 'S', 'E', ' ' };
 

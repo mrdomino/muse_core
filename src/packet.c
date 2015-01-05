@@ -1,13 +1,17 @@
 /* Copyright 2014 Interaxon, Inc. */
 
+#ifndef IX_MUSE_CORE_H_
 #include <stddef.h>
 #include <stdint.h>
 #include "defs.h"
 #include "result.h"
 #include "packet.h"
+#endif
 
+#ifndef IX_INTERNAL_H_
 #include "r.h"
 #include "defs_internal.h"
+#endif
 
 #include <assert.h>
 #include <hammer/glue.h>
