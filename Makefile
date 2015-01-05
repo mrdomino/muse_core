@@ -67,7 +67,7 @@ options:
 	@echo
 
 DIRS = $(BUILDLIBDIR) $(BUILDINCDIR) $(BUILDDIR_S)/src $(BUILDDIR_A)/src \
-       $(BUILDDIR_A)/test $(LIBDIR) $(MUSE_CORE_INCDIR)
+       $(BUILDDIR_A)/test $(BUILDDIR_A)/examples $(LIBDIR) $(MUSE_CORE_INCDIR)
 
 dirs: $(DIRS)
 
@@ -92,7 +92,7 @@ $(MUSE_CORE_INCDIR)/%.h: $(SRCDIR)/%.h
 	@echo copying $@
 	@cp $< $@
 
-# TODO(someday): autogenned header dependencies
+# TODO(soon): autogenned header dependencies
 
 $(BUILDDIR_S)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@echo cc $@
@@ -124,6 +124,15 @@ benchmark: dirs $(BENCHMARK_A_O) lib $(HAMMER_A)
 	@$(CXXLD) -o benchmark \
 	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
 	  $(BENCHMARK_A_O) -lmuse_core -lhammer
+
+
+EXAMPLES_A_O = $(BUILDDIR_A)/examples/internal_usage.o
+
+$(BUILDDIR_A)/examples/%.o: examples/%.cpp
+	@echo c++ $@
+	@$(CXX) -c -o $@ $(CXXFLAGS) $<
+
+all: $(EXAMPLES_A_O)
 
 
 ################################################################################
