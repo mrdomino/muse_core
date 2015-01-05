@@ -68,6 +68,7 @@ H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
 H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
 H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
 
+H_ACT_APPLY(act_prefix_no_dropped, _make_uint_const, 0)
 H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
 static HParsedToken*
@@ -150,9 +151,10 @@ IX_INITIALIZER(_pp_init_parser)
 
   H_VRULE(flags_dropped, nibble);
   H_VRULE(flags_no_dropped, nibble);
-  H_RULE(prefix_no_dropped, flags_no_dropped);
+  H_ARULE(prefix_no_dropped, flags_no_dropped);
   H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
-  H_RULE(prefix, h_choice(prefix_no_dropped, prefix_dropped, NULL));
+  H_RULE(prefix_maybe_dropped,
+         h_choice(prefix_no_dropped, prefix_dropped, NULL));
 
   H_ARULE(data_battery, h_repeat_n(short_, 4));
   H_ARULE(samples_drlref,
@@ -161,10 +163,12 @@ IX_INITIALIZER(_pp_init_parser)
           h_sequence(h_repeat_n(sample, 3), h_ignore(h_bits(2, false)), NULL));
   H_ARULE(samples_eeg4, h_repeat_n(sample, 4));
 
-  H_ARULE(packet_acc, h_sequence(type_acc, prefix, samples_acc, NULL));
+  H_ARULE(packet_acc,
+          h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
 
   /* TODO(soon): configurable number of EEG channels */
-  H_ARULE(packet_eeg4, h_sequence(type_eeg, prefix, samples_eeg4, NULL));
+  H_ARULE(packet_eeg4,
+          h_sequence(type_eeg, prefix_maybe_dropped, samples_eeg4, NULL));
 
   /* TODO(soon): compressed EEG */
 
