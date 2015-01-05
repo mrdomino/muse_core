@@ -115,17 +115,12 @@ _make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
   return H_MAKE(ix_packet, pac);
 }
 
-H_ACT_APPLY(_make_packet, _make_packet_generic,
+H_ACT_APPLY(act_ix_packet_no_dropped, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0), true, false)
-H_ACT_APPLY(_make_packet_dropped, _make_packet_generic,
+H_ACT_APPLY(act_ix_packet_maybe_dropped, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0), true, true)
-
-H_ACT_APPLY(act_packet_sync, _make_packet_generic, IX_PAC_SYNC, false, false)
-static HAction act_packet_error = _make_packet;
-static HAction act_packet_battery = _make_packet;
-static HAction act_packet_drlref = _make_packet;
-static HAction act_packet_acc = _make_packet_dropped;
-static HAction act_packet_eeg4 = _make_packet_dropped;
+H_ACT_APPLY(act_packet_sync, _make_packet_generic,
+            IX_PAC_SYNC, false, false)
 
 IX_INITIALIZER(_pp_init_parser)
 {
@@ -177,22 +172,29 @@ IX_INITIALIZER(_pp_init_parser)
 
 #undef _SRULE
 
-  H_ARULE(packet_acc,
-          h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
+  H_AVRULE(packet_sync, word);
+
+#define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
+#define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
+
+  _PRULE_D(packet_acc,
+           h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
 
   /* TODO(soon): configurable number of EEG channels */
-  H_ARULE(packet_eeg4,
-          h_sequence(type_eeg, prefix_maybe_dropped, samples_eeg4, NULL));
+  _PRULE_D(packet_eeg4,
+           h_sequence(type_eeg, prefix_maybe_dropped, samples_eeg4, NULL));
 
   /* TODO(soon): compressed EEG */
 
-  H_ARULE(packet_drlref,
-          h_sequence(type_drlref, prefix_no_dropped, samples_drlref, NULL));
-  H_ARULE(packet_battery,
+  _PRULE(packet_drlref,
+         h_sequence(type_drlref, prefix_no_dropped, samples_drlref, NULL));
+  _PRULE(packet_battery,
           h_sequence(type_battery, prefix_no_dropped, data_battery, NULL));
-  H_ARULE(packet_error,
+  _PRULE(packet_error,
           h_sequence(type_error, prefix_no_dropped, word, NULL));
-  H_AVRULE(packet_sync, word);
+
+#undef _PRULE
+#undef _PRULE_D
 
   H_RULE(packet,
          h_with_endianness(BIT_LITTLE_ENDIAN | BYTE_LITTLE_ENDIAN,
