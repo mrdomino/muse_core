@@ -116,6 +116,16 @@ install:
 .PHONY: all clean copy-headers default deps dirs distclean install lib options
 
 
+BENCHMARK_MOD = packet_benchmark
+BENCHMARK_A_O = $(BUILDDIR_A)/test/packet_benchmark.o
+
+benchmark: dirs $(BENCHMARK_A_O) lib $(HAMMER_A)
+	@echo c++ld benchmark
+	@$(CXXLD) -o benchmark \
+	  -Wl,-rpath,$(LIBDIR):$(BUILDLIBDIR) $(CXXLDFLAGS) $(CXXFLAGS) \
+	  $(BENCHMARK_A_O) -lmuse_core -lhammer
+
+
 ################################################################################
 ######  Dependency (for unittests): gtest                                 ######
 ################################################################################
