@@ -23,12 +23,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "defs.h"
-#include "result.h"
 #include "packet.h"
 #endif
 
 #ifndef IX_INTERNAL_H_
-#include "r.h"
 #include "defs_internal.h"
 #endif
 

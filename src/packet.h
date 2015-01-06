@@ -5,7 +5,6 @@
  * include <stddef.h> for size_t
  * include <stdint.h> for sized ints
  * include "defs.h" for SO_EXPORT
- * include "result.h" for ix_result
  */
 
 /*

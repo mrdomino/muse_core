@@ -18,8 +18,8 @@ extern "C" {
 #include <stdint.h>
 
 #include "defs.h"
-#include "result.h"
 #include "packet.h"
+#include "result.h"
 #include "connect.h"
 #include "serial.h"
 #include "version.h"

@@ -33,8 +33,8 @@ namespace interaxon {
 namespace _ {
 
 #include <muse_core/defs.h>
-#include <muse_core/result.h>
 #include <muse_core/packet.h>
+#include <muse_core/result.h>
 #include <muse_core/connect.h>
 #include <muse_core/serial.h>
 #include <muse_core/version.h>
