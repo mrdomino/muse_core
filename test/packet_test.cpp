@@ -87,8 +87,8 @@ pair<uint32_t, vector<IxPacket>> test_parse(parse_input const& buf) {
     pacs->push_back(IxPacket(p));
   };
   auto r = ix_packet_parse(buf.data(), buf.size(), pac_f, &pacs);
-  if (r.err == IX_OK) {
-    return make_pair(r.res.uin, pacs);
+  if (r > 0) {
+    return make_pair(r, pacs);
   }
   else {
     throw PacketParseError();
@@ -112,6 +112,12 @@ protected:
   decltype(test_parse(buf)) r;
   decltype(r.second) v;
   remove_reference<decltype(v[0])>::type p;
+};
+
+class EstLenTest : public ::testing::Test {
+protected:
+  size_t est_len_buf() { return ix_packet_est_len(buf.data(), buf.size()); }
+  parse_input buf;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -279,5 +285,73 @@ TEST_F(PacketTest, ParsesErrorPacket) {
 
 // TODO(soon): compressed eeg
 // TODO(soon): NEED MORE vs BAD STR
+
+TEST_F(EstLenTest, EmptyStringIsTwo) {
+  EXPECT_EQ(2u, ix_packet_est_len(buf.data(), 0));
+}
+
+TEST_F(EstLenTest, InvalidTypeIsZero) {
+  buf.push_back(0);
+  EXPECT_EQ(0u, est_len_buf());
+}
+
+TEST_F(EstLenTest, ValidFullPackets) {
+  auto inputs = vector<parse_input>();
+  inputs.push_back(eeg_packet(1u, 2u, 3u, 4u));
+  inputs.push_back(eeg_packet(1u, 2u, 3u, 4u, 5u));
+  inputs.push_back(acc_packet(1u, 2u, 3u));
+  inputs.push_back(acc_packet(1u, 2u, 3u, 4u));
+  inputs.push_back(drlref_packet(1u, 2u));
+  inputs.push_back(error_packet(123));
+  inputs.push_back(sync_packet());
+  inputs.push_back(battery_packet(1, 2, 3, 4));
+  for (auto input : inputs) {
+    EXPECT_EQ(input.size(), ix_packet_est_len(input.data(), input.size()));
+  }
+}
+
+TEST_F(EstLenTest, EegPrefix) {
+  buf.push_back(0xe << 4);
+  EXPECT_EQ(6u, est_len_buf());
+  buf.push_back(0);
+  EXPECT_EQ(6u, est_len_buf());
+
+  buf.clear();
+  buf.push_back(0xe << 4 | 1 << 3);
+  EXPECT_EQ(8u, est_len_buf());
+  buf.push_back(1);
+  buf.push_back(2);
+  EXPECT_EQ(8u, est_len_buf());
+}
+
+TEST_F(EstLenTest, AccPrefix) {
+  buf.push_back(0xa << 4);
+  EXPECT_EQ(5u, est_len_buf());
+  buf.push_back(1);
+  EXPECT_EQ(5u, est_len_buf());
+
+  buf.clear();
+  buf.push_back(0xa << 4 | 1 << 3);
+  EXPECT_EQ(7u, est_len_buf());
+}
+
+TEST_F(EstLenTest, OtherPrefixes) {
+  buf.push_back(0xb << 4);
+  EXPECT_EQ(9u, est_len_buf());
+
+  buf.clear();
+  buf.push_back(0x9 << 4);
+  EXPECT_EQ(4u, est_len_buf());
+
+  buf.clear();
+  buf.push_back(0xd << 4);
+  EXPECT_EQ(5u, est_len_buf());
+
+  buf.clear();
+  buf.push_back(0xff);
+  EXPECT_EQ(4u, est_len_buf());
+}
+
+// TODO(soon): est_len compressed EEG + length + IX_PAC_MAXSIZE
 
 }  // namespace

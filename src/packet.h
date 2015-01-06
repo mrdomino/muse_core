@@ -20,6 +20,12 @@ typedef enum {
   IX_PAC_DRLREF
 } ix_pac_type;
 
+/*
+ * High guess at the maximum valid packet size. Used in ix_packet_est_len.
+ * Exposed here for possible use in computing buffer sizes.
+ */
+enum { IX_PAC_MAXSIZE = 4096u };
+
 
 /*
  * Generic packet structure.
@@ -113,11 +119,48 @@ SO_EXPORT uint16_t ix_packet_dropped_samples(const ix_packet* p);
 /*
  * Parse a packet from a buffer.
  *
- * Returns err == IX_OK, res.uin == offset of first unparsed byte on successful
- * parse. Calls pac_f once per packet parsed with the packet and the supplied
- * user_data. Must be called on non-NULL buf.
+ * Returns the offset of the first unparsed byte on successful parse, or 0 on
+ * parse error. If the parse was successful, this will have called pac_f once
+ * per packet parsed with the parsed packet and the supplied user_data.
+ *
+ * An error could mean either a corrupt data stream or a partial packet at the
+ * end of the buffer. Use ix_packet_est_len to disambiguate these two cases.
+ *
+ * Must be called on non-NULL buf.
  */
 SO_EXPORT
-ix_result
+size_t
 ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
                 void* user_data);
+
+/*
+ * Returns an estimate of how many bytes are needed for the next full packet.
+ *
+ * This uses a conservative heuristic based on limited knowledge about packet
+ * types and structure. The goal is to inform the caller, given a buffer that
+ * contains a partial packet:
+ *
+ *   1. when to try to parse it again, and
+ *
+ *   2. whether a parse failure would indicate corruption or merely
+ *      insufficient data.
+ *
+ * If the return value is less than or equal to the passed length and
+ * ix_packet_parse of that buffer and length returns an error, the buffer is
+ * definitely corrupt and it is time to restart the stream, report an error, or
+ * start scanning for a sync packet, depending on the application logic. (This
+ * implies that a return value of 0 always indicates corruption.)
+ *
+ * For a given buffer, either est_len(buf, n) <= est_len(buf, n + 1) or
+ * est_len(buf, n + 1) == -1. I.e., est_len returns a conservative estimate. It
+ * may underestimate, but it never overestimates. If (m = est_len(buf, n)) > n,
+ * then at least m - n more bytes are needed before the buffer could contain
+ * a valid packet.
+ *
+ * This assumes that the maximum valid packet size is less than or equal to
+ * IX_PAC_MAXSIZE. If it sees a packet that looks like it is bigger than that,
+ * it returns 0 instead.
+ */
+SO_EXPORT
+size_t
+ix_packet_est_len(const uint8_t* buf, size_t len);

@@ -243,20 +243,52 @@ IX_INITIALIZER(_ix_packet_init)
   g_ix_packet = packet;
 }
 
-ix_result
+size_t
 ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
                 void* user_data)
 {
   HParseResult *p = h_parse(g_ix_packet, buf, len);
-  ix_result    ret;
+  size_t       r;
 
   if (p) {
+    assert(p->bit_length > 0);
     assert(p->bit_length % 8 == 0);
-    ret = ix_r_uin(p->bit_length / 8);
+    r = p->bit_length / 8;
     pac_f(H_CAST(ix_packet, p->ast), user_data);
     h_parse_result_free(p);
   }
-  else ret = ix_r_err(IX_EBADSTR);
+  else r = 0;
+  return r;
+}
+
+size_t
+ix_packet_est_len(const uint8_t* buf, size_t len)
+{
+  bool   has_dropped;
+  size_t ret;
+
+  if (len == 0) {
+    return 2;
+  }
+  else {
+    switch (*buf >> 4) {
+    case 0xa: case 0xe: has_dropped = true; break;
+    default: has_dropped = false;
+    }
+    switch (*buf >> 4) {
+    case 0x9: ret = 4; break;
+    case 0xa: ret = 5; break;
+    case 0xb: ret = 9; break;
+    /* TODO(soon): compressed EEG */
+    case 0xd: ret = 5; break;
+    case 0xe: ret = 6; break;
+    case 0xf: ret = 4; break;
+    default: return 0;
+    }
+  }
+  if (has_dropped && (*buf & 0x8)) {
+    ret += 2;
+  }
   return ret;
 }
 
