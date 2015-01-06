@@ -16,10 +16,13 @@
 static const char* const _errors[] = {
   "ok",
   "need more input data",
-  "need more return capacity",
   "parse failure",
   "unsupported protocol number",
 };
+
+#if __STDC_VERSION__ >= 201112L
+_Static_assert(LEN(_errors) == IX_N_ERRORS, "Fix _errors");
+#endif
 
 const char*
 ix_strerror(ix_err e)

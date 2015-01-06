@@ -15,8 +15,10 @@ typedef enum _ix_err {
   IX_OK,
   IX_EMOREDATA,
   IX_EBADSTR,
-  IX_EBADVER,
+  IX_EBADVER
 } ix_err;
+
+enum { IX_N_ERRORS = IX_EBADVER + 1 };
 
 /*
  * Return type of a function that could fail.
