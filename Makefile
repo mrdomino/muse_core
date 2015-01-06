@@ -150,7 +150,8 @@ benchmark: $(BENCHMARK_A_O) $(MUSE_CORE_S) $(HAMMER_A)
 #all: mark
 
 
-EXAMPLES_A_O = $(BUILDDIR_A)/examples/internal_usage.o
+EXAMPLES_MOD = internal_usage muse_core_inc
+EXAMPLES_A_O = $(foreach ex,$(EXAMPLES_MOD),$(BUILDDIR_A)/examples/$(ex).o)
 
 $(BUILDDIR_A)/examples/%.o: examples/%.cpp
 	@echo c++ $@
@@ -177,7 +178,7 @@ test: dirs unittests
 	@echo unittests
 	@./unittests
 
-UNITTEST_MOD = connect_test muse_core_test packet_test version_test
+UNITTEST_MOD = connect_test packet_test version_test
 UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
 $(UNITTEST_A_O): $(MUSE_CORE_H)
