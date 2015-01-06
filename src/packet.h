@@ -145,7 +145,7 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
                 void* user_data);
 
 /*
- * Returns an estimate of how many bytes are needed for the next full packet.
+ * Return an estimate of how many bytes are needed for the next full packet.
  *
  * This uses a conservative heuristic based on limited knowledge about packet
  * types and structure. The goal is to inform the caller, given a buffer that
