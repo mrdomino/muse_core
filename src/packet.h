@@ -41,7 +41,9 @@ typedef void (*ix_packet_fn)(const ix_packet* p, void* user_data);
 /*
  * Return the type of the passed packet.
  */
-SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
+SO_EXPORT
+ix_pac_type
+ix_packet_type(const ix_packet* p);
 
 /*
  * Packet channel accessor.
@@ -54,15 +56,22 @@ SO_EXPORT ix_pac_type ix_packet_type(const ix_packet* p);
  * channel offsets before calling ix_packet_ch, or else you may inadvertently
  * give users access to arbitrary program memory.
  */
-SO_EXPORT uint16_t ix_packet_ch(const ix_packet* p, size_t channel);
+SO_EXPORT
+uint16_t
+ix_packet_ch(const ix_packet* p, size_t channel);
 
 /*
  * Return the error code of the passed packet.
  *
  * Must be called only on packets of type IX_PAC_ERROR.
  */
-SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
+SO_EXPORT
+uint32_t
+ix_packet_error(const ix_packet* p);
 
+/*
+ * Macro that asserts a certain packet type and passes the packet through.
+ */
 #define _ix_assert_type(p, t) (assert(ix_packet_type(p) == t), (p))
 
 /*
@@ -114,7 +123,9 @@ SO_EXPORT uint32_t ix_packet_error(const ix_packet* p);
  * samples -- at this time, IX_PAC_ACCELEROMETER and IX_PAC_EEG. It is an error
  * to call it on any other packet type.
  */
-SO_EXPORT uint16_t ix_packet_dropped_samples(const ix_packet* p);
+SO_EXPORT
+uint16_t
+ix_packet_dropped_samples(const ix_packet* p);
 
 /*
  * Parse a packet from a buffer.
@@ -149,10 +160,11 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
  * ix_packet_parse of that buffer and length returns an error, the buffer is
  * definitely corrupt and it is time to restart the stream, report an error, or
  * start scanning for a sync packet, depending on the application logic. (This
- * implies that a return value of 0 always indicates corruption.)
+ * implies that a return value of 0 always indicates corruption. N.B. 0 is not
+ * returned if len == 0.)
  *
  * For a given buffer, either est_len(buf, n) <= est_len(buf, n + 1) or
- * est_len(buf, n + 1) == -1. I.e., est_len returns a conservative estimate. It
+ * est_len(buf, n + 1) == 0. I.e., est_len returns a conservative estimate. It
  * may underestimate, but it never overestimates. If (m = est_len(buf, n)) > n,
  * then at least m - n more bytes are needed before the buffer could contain
  * a valid packet.
