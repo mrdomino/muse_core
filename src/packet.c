@@ -268,7 +268,7 @@ ix_packet_est_len(const uint8_t* buf, size_t len)
   size_t ret;
 
   if (len == 0) {
-    return 2;
+    return 4;
   }
   else {
     switch (*buf >> 4) {

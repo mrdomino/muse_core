@@ -286,8 +286,13 @@ TEST_F(PacketTest, ParsesErrorPacket) {
 // TODO(soon): compressed eeg
 // TODO(soon): NEED MORE vs BAD STR
 
-TEST_F(EstLenTest, EmptyStringIsTwo) {
-  EXPECT_EQ(2u, ix_packet_est_len(buf.data(), 0));
+TEST_F(EstLenTest, EmptyString) {
+  EXPECT_EQ(4u, ix_packet_est_len(buf.data(), 0));
+}
+
+TEST_F(EstLenTest, Null) {
+  EXPECT_EQ(4u, ix_packet_est_len(NULL, 0));
+  //EXPECT_DEATH(ix_packet_est_len(NULL, 1), "");
 }
 
 TEST_F(EstLenTest, InvalidTypeIsZero) {

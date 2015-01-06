@@ -172,6 +172,9 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
  * This assumes that the maximum valid packet size is less than or equal to
  * IX_PAC_MAXSIZE. If it sees a packet that looks like it is bigger than that,
  * it returns 0 instead.
+ *
+ * If buf is NULL, len must be 0. The return value in this case is positive
+ * and less than or equal to the minimum possible packet length.
  */
 SO_EXPORT
 size_t
