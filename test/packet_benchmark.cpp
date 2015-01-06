@@ -82,12 +82,13 @@ int main() {
     auto inputs = all_types;
     inputs.insert(inputs.end(), extras.cbegin(), extras.cend());
 
-    auto tests = std::unique_ptr<HParserTestcase[]>(new HParserTestcase[inputs.size() + 1]);
+    auto tests = std::vector<HParserTestcase>();
+    tests.reserve(inputs.size() + 1);
     for (auto i = 0u; i < inputs.size(); ++i) {
-        tests[i] = {(unsigned char*)inputs[i].data(), inputs[i].size(), const_cast<char*>("<u>")};
+        tests.push_back({(unsigned char*)inputs[i].data(), inputs[i].size(), const_cast<char*>("<u>")});
     }
-    tests[inputs.size()] = { NULL, 0, NULL };
-    auto results = h_benchmark(g_ix_packet, tests.get());
+    tests.push_back({ NULL, 0, NULL });
+    auto results = h_benchmark(g_ix_packet, tests.data());
     h_benchmark_report(stdout, results);
     return 0;
 }
