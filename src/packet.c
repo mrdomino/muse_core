@@ -137,18 +137,23 @@ _make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
                      const HParseResult* p, void* user_data)
 {
   ix_packet *pac;
+  uint8_t   data_field;
 
   IX_UNUSED(user_data);
   pac = H_ALLOC(ix_packet);
   pac->type = type;
-  if (has_dropped_samples) pac->samples_dropped.dropped = H_FIELD_UINT(1);
+  if (has_dropped_samples) {
+      data_field = 2;
+      pac->samples_dropped.dropped = H_FIELD_UINT(1);
+  }
+  else data_field = 1;
   if (has_data) {
-    switch (H_INDEX_TOKEN(p->ast, 2)->token_type) {
+    switch (H_INDEX_TOKEN(p->ast, data_field)->token_type) {
     case TT_ix_samples_n:
-      pac->samples_dropped.samples = *H_FIELD(ix_samples_n, 2);
+      pac->samples_dropped.samples = *H_FIELD(ix_samples_n, data_field);
       break;
     case TT_UINT:
-      pac->error = H_FIELD_UINT(2);
+      pac->error = H_FIELD_UINT(data_field);
       break;
     default: assert(false);
     }
@@ -156,11 +161,14 @@ _make_packet_generic(ix_pac_type type, bool has_data, bool has_dropped_samples,
   return H_MAKE(ix_packet, pac);
 }
 
-_ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
-_ACT_VALIDATE_TYPE(acc, IX_PAC_ACCELEROMETER, 0xa)
-_ACT_VALIDATE_TYPE(battery, IX_PAC_BATTERY, 0xb)
-_ACT_VALIDATE_TYPE(error, IX_PAC_ERROR, 0xd)
-_ACT_VALIDATE_TYPE(eeg, IX_PAC_EEG, 0xe)
+H_ACT_APPLY(act_type_acc, _make_uint_const, IX_PAC_ACCELEROMETER)
+static HAction act_type_acc_dropped = act_type_acc;
+H_ACT_APPLY(act_type_eeg, _make_uint_const, IX_PAC_EEG)
+static HAction act_type_eeg_dropped = act_type_eeg;
+H_ACT_APPLY(act_type_drlref, _make_uint_const, IX_PAC_DRLREF)
+H_ACT_APPLY(act_type_battery, _make_uint_const, IX_PAC_BATTERY)
+H_ACT_APPLY(act_type_error, _make_uint_const, IX_PAC_ERROR)
+
 H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
 H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
 H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
@@ -181,26 +189,18 @@ IX_INITIALIZER(_ix_packet_init)
   assert(!inited);
   inited = 1;
 #endif
-  H_RULE(nibble,
-         h_with_endianness(BIT_BIG_ENDIAN, h_bits(4, false)));
   H_RULE(short_,    /* TODO(someday): little endian shorts */
-         h_with_endianness(BYTE_BIG_ENDIAN, h_uint16()));
+         h_uint16());
   H_RULE(sample, h_bits(10, false));
   H_RULE(word, h_uint32());
 
-  H_AVRULE(type_acc, nibble);
-  H_AVRULE(type_eeg, nibble);
-  H_AVRULE(type_drlref, nibble);
-  H_AVRULE(type_battery, nibble);
-  H_AVRULE(type_error, nibble);
-
-  H_VRULE(flags_dropped, nibble);
-  H_VRULE(flags_no_dropped, nibble);
-  H_RULE(prefix_no_dropped, flags_no_dropped);
-  H_ARULE(prefix_dropped, h_sequence(flags_dropped, short_, NULL));
-  H_RULE(prefix_maybe_dropped,
-         h_choice(h_action(prefix_no_dropped, act_prefix_no_dropped, NULL),
-                  prefix_dropped, NULL));
+  H_ARULE(type_acc, h_ch(0xa0));
+  H_ARULE(type_acc_dropped, h_ch(0xa8));
+  H_ARULE(type_eeg, h_ch(0xe0));
+  H_ARULE(type_eeg_dropped, h_ch(0xe8));
+  H_ARULE(type_drlref, h_ch(0x90));
+  H_ARULE(type_battery, h_ch(0xb0));
+  H_ARULE(type_error, h_ch(0xd0));
 
   _SRULE(data_battery,
          h_repeat_n(short_, BAT_CHANNELS));
@@ -219,29 +219,35 @@ IX_INITIALIZER(_ix_packet_init)
   _SRULE(samples_eeg4,
          h_repeat_n(sample, EEG4_CHANNELS));
 
-  H_AVRULE(packet_sync, word);
-  _PRULE_D(packet_acc,
-           h_sequence(type_acc, prefix_maybe_dropped, samples_acc, NULL));
+  H_ARULE(packet_sync, h_token((const uint8_t*)"\xff\xff\xaa\x55", 4));
+  _PRULE(packet_acc,
+         h_sequence(type_acc, samples_acc, NULL));
+  _PRULE_D(packet_acc_dropped,
+           h_sequence(type_acc_dropped, short_, samples_acc, NULL));
   /* TODO(soon): configurable number of EEG channels */
-  _PRULE_D(packet_eeg4,
-           h_sequence(type_eeg, prefix_maybe_dropped, samples_eeg4, NULL));
+  _PRULE(packet_eeg4,
+         h_sequence(type_eeg, samples_eeg4, NULL));
+  _PRULE_D(packet_eeg4_dropped,
+           h_sequence(type_eeg_dropped, short_, samples_eeg4, NULL));
   /* TODO(soon): compressed EEG */
   _PRULE(packet_drlref,
-         h_sequence(type_drlref, prefix_no_dropped, samples_drlref, NULL));
+         h_sequence(type_drlref, samples_drlref, NULL));
   _PRULE(packet_battery,
-          h_sequence(type_battery, prefix_no_dropped, data_battery, NULL));
+          h_sequence(type_battery, data_battery, NULL));
   _PRULE(packet_error,
-          h_sequence(type_error, prefix_no_dropped, word, NULL));
+          h_sequence(type_error, word, NULL));
 
   H_RULE(packet,
-         h_with_endianness(BIT_LITTLE_ENDIAN | BYTE_LITTLE_ENDIAN,
-                           h_choice(packet_acc,
-                                    packet_eeg4,
-                                    packet_drlref,
-                                    packet_sync,
-                                    packet_battery,
-                                    packet_error,
-                                    NULL)));
+         h_choice(packet_acc,
+                  packet_acc_dropped,
+                  packet_eeg4,
+                  packet_eeg4_dropped,
+                  packet_drlref,
+                  packet_sync,
+                  packet_battery,
+                  packet_error,
+                  NULL));
+
   g_ix_packet = packet;
 }
 
