@@ -2,8 +2,7 @@ Muse Core
 ---------
 
 This library is intended to provide secure, simple reference implementations of
-core Muse client algorithms. It can be linked against directly as part of a
-client software package, or used to verify a custom implementation.
+core Muse client algorithms.
 
 It is fairly low-level. It should know how to send and read responses to serial
 commands, how to deserialize packets off the wire, and when to transition the
@@ -12,3 +11,7 @@ client-facing packet data types. It doesn't know anything about event loops or
 threads.
 
 Everything is reentrant except where specified.
+
+It is still very incomplete. The packet parser is the only thing that's even
+close to done -- everything else is likely to either change or go away, and the
+packet parser API may also change.
