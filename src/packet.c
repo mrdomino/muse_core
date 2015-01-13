@@ -1,4 +1,4 @@
-/* Copyright 2014 Interaxon, Inc. */
+/* Copyright 2015 Steven Dee. */
 
 /*
  * This file defines parsers for all the Muse packet types.

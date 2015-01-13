@@ -1,4 +1,4 @@
-/* Copyright 2014 Interaxon, Inc. */
+/* Copyright 2015 Steven Dee. */
 
 /*
  * include <stdint.h> for sized int types

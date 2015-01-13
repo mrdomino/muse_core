@@ -1,4 +1,4 @@
-// Copyright 2015 Interaxon, Inc.
+// Copyright 2015 Steven Dee.
 //
 // This file exposes the Muse Core API under a namespace so that it can be
 // called and compiled natively as C++.

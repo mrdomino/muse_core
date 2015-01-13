@@ -1,4 +1,4 @@
-// Copyright 2015 Interaxon, Inc.
+// Copyright 2015 Steven Dee.
 
 // Packet parser benchmarks.
 // This is kinda hack-and-slash just to get some useful numbers right away.

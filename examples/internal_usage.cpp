@@ -1,4 +1,4 @@
-// Copyright 2015 Interaxon, Inc.
+// Copyright 2015 Steven Dee.
 
 #include "internal_usage.h"
 

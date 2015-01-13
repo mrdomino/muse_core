@@ -1,4 +1,4 @@
-/* Copyright 2014 Interaxon, Inc. */
+/* Copyright 2015 Steven Dee. */
 
 #ifndef IX_MUSE_CORE_H_
 #include <stdint.h>
