@@ -35,9 +35,9 @@ CXXFLAGS += $(INCS)
 LDFLAGS += $(LIBS)
 CXXLDFLAGS += $(LIBS)
 
-MUSE_CORE_MOD = connect packet r result version
+MUSE_CORE_MOD = packet
 
-MUSE_CORE_INC = connect defs muse_core packet result serial util version
+MUSE_CORE_INC = defs muse_core packet serial util
 
 MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(BUILDINCDIR)/muse_core/$(inc).h)
@@ -150,16 +150,6 @@ benchmark: $(BENCHMARK_A_O) $(MUSE_CORE_S) $(HAMMER_A)
 #all: mark
 
 
-EXAMPLES_MOD = internal_usage muse_core_inc
-EXAMPLES_A_O = $(foreach ex,$(EXAMPLES_MOD),$(BUILDDIR_A)/examples/$(ex).o)
-
-$(BUILDDIR_A)/examples/%.o: examples/%.cpp
-	@echo c++ $@
-	@$(CXX) -c -o $@ $(CXXFLAGS) $<
-
-all: $(EXAMPLES_A_O)
-
-
 ################################################################################
 ######  Dependency (for unittests): gtest                                 ######
 ################################################################################
@@ -178,7 +168,7 @@ test: dirs unittests
 	@echo unittests
 	@./unittests
 
-UNITTEST_MOD = connect_test packet_test version_test
+UNITTEST_MOD = packet_test
 UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
 $(UNITTEST_A_O): $(MUSE_CORE_H)

@@ -3,7 +3,6 @@
 
 extern "C" {
 #include <muse_core/defs.h>
-#include <muse_core/result.h>
 #include <muse_core/packet.h>
 }
 
