@@ -249,6 +249,8 @@ IX_INITIALIZER(_ix_packet_init)
                   NULL));
 
   g_ix_packet = packet;
+  // Try to compile for regular; don't care if we succeed.
+  h_compile(g_ix_packet, PB_REGULAR, 0);
 }
 
 uint32_t
