@@ -8,7 +8,7 @@
 /*
  * include <assert.h> for accessors
  * include <stdint.h> for sized ints
- * include "defs.h" for SO_EXPORT
+ * include "defs.h" for IX_EXPORT
  */
 
 /*
@@ -44,7 +44,7 @@ typedef void (*ix_packet_fn)(const ix_packet* p, void* user_data);
 /*
  * Return the type of the passed packet.
  */
-SO_EXPORT
+IX_EXPORT
 ix_pac_type
 ix_packet_type(const ix_packet* p);
 
@@ -59,7 +59,7 @@ ix_packet_type(const ix_packet* p);
  * channel offsets before calling ix_packet_ch, or else you may inadvertently
  * give users access to arbitrary program memory.
  */
-SO_EXPORT
+IX_EXPORT
 uint16_t
 ix_packet_ch(const ix_packet* p, uint8_t channel);
 
@@ -68,7 +68,7 @@ ix_packet_ch(const ix_packet* p, uint8_t channel);
  *
  * Must be called only on packets of type IX_PAC_ERROR.
  */
-SO_EXPORT
+IX_EXPORT
 uint32_t
 ix_packet_error(const ix_packet* p);
 
@@ -126,7 +126,7 @@ ix_packet_error(const ix_packet* p);
  * samples -- at this time, IX_PAC_ACCELEROMETER and IX_PAC_EEG. It is an error
  * to call it on any other packet type.
  */
-SO_EXPORT
+IX_EXPORT
 uint16_t
 ix_packet_dropped_samples(const ix_packet* p);
 
@@ -142,7 +142,7 @@ ix_packet_dropped_samples(const ix_packet* p);
  *
  * Must be called on non-NULL buf.
  */
-SO_EXPORT
+IX_EXPORT
 uint32_t
 ix_packet_parse(const uint8_t* buf, uint32_t len, ix_packet_fn pac_f,
                 void* user_data);
@@ -179,6 +179,6 @@ ix_packet_parse(const uint8_t* buf, uint32_t len, ix_packet_fn pac_f,
  * If buf is NULL, len must be 0. The return value in this case is positive
  * and less than or equal to the minimum possible packet length.
  */
-SO_EXPORT
+IX_EXPORT
 uint32_t
 ix_packet_est_len(const uint8_t* buf, uint32_t len);

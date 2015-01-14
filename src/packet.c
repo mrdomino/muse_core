@@ -87,7 +87,7 @@ enum {
  * Top-level packet parser. Exported for use in benchmarking code, but not
  * mentioned in the public API. Clients should never use this directly.
  */
-SO_EXPORT HParser *g_ix_packet;
+IX_EXPORT HParser *g_ix_packet;
 
 
 /*
