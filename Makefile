@@ -37,7 +37,7 @@ CXXLDFLAGS += $(LIBS)
 
 MUSE_CORE_MOD = packet
 
-MUSE_CORE_INC = defs muse_core packet serial util
+MUSE_CORE_INC = defs muse_core packet
 
 MUSE_CORE_A_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_A)/src/$(mod).o)
 MUSE_CORE_H = $(foreach inc,$(MUSE_CORE_INC),$(BUILDINCDIR)/muse_core/$(inc).h)

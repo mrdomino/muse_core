@@ -1,4 +1,10 @@
-/* Copyright 2015 Steven Dee. */
+/*
+ * Copyright 2015 Steven Dee.
+ *
+ * Redistributable under the terms of the GNU General Public License,
+ * version 2. No warranty is implied by this distribution.
+ */
+
 
 #define IX_UNUSED(x) ((void)x)
 

@@ -1,4 +1,9 @@
-/* Copyright 2015 Steven Dee. */
+/*
+ * Copyright 2015 Steven Dee.
+ *
+ * Redistributable under the terms of the GNU General Public License,
+ * version 2. No warranty is implied by this distribution.
+ */
 
 /*
  * include <assert.h> for accessors
@@ -23,7 +28,7 @@ typedef enum {
  * High guess at the maximum valid packet size. Used in ix_packet_est_len.
  * Exposed here for possible use in computing buffer sizes.
  */
-enum { IX_PAC_MAXSIZE = 4096u };
+enum { IX_PAC_MAXSIZE = 32u };
 
 
 /*
@@ -57,7 +62,7 @@ ix_packet_type(const ix_packet* p);
  */
 SO_EXPORT
 uint16_t
-ix_packet_ch(const ix_packet* p, size_t channel);
+ix_packet_ch(const ix_packet* p, uint8_t channel);
 
 /*
  * Return the error code of the passed packet.
@@ -139,8 +144,8 @@ ix_packet_dropped_samples(const ix_packet* p);
  * Must be called on non-NULL buf.
  */
 SO_EXPORT
-size_t
-ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
+uint32_t
+ix_packet_parse(const uint8_t* buf, uint32_t len, ix_packet_fn pac_f,
                 void* user_data);
 
 /*
@@ -176,5 +181,5 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
  * and less than or equal to the minimum possible packet length.
  */
 SO_EXPORT
-size_t
-ix_packet_est_len(const uint8_t* buf, size_t len);
+uint32_t
+ix_packet_est_len(const uint8_t* buf, uint32_t len);

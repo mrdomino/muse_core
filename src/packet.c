@@ -1,4 +1,9 @@
-/* Copyright 2015 Steven Dee. */
+/*
+ * Copyright 2015 Steven Dee.
+ *
+ * Redistributable under the terms of the GNU General Public License,
+ * version 2. No warranty is implied by this distribution.
+ */
 
 /*
  * This file defines parsers for all the Muse packet types.
@@ -20,7 +25,6 @@
  */
 
 #ifndef IX_MUSE_CORE_H_
-#include <stddef.h>
 #include <stdint.h>
 #include "defs.h"
 #include "packet.h"
@@ -241,12 +245,12 @@ IX_INITIALIZER(_ix_packet_init)
   g_ix_packet = packet;
 }
 
-size_t
-ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
+uint32_t
+ix_packet_parse(const uint8_t* buf, uint32_t len, ix_packet_fn pac_f,
                 void* user_data)
 {
   HParseResult *p = h_parse(g_ix_packet, buf, len);
-  size_t       r;
+  uint32_t     r;
 
   if (p) {
     assert(p->bit_length > 0);
@@ -259,11 +263,11 @@ ix_packet_parse(const uint8_t* buf, size_t len, ix_packet_fn pac_f,
   return r;
 }
 
-size_t
-ix_packet_est_len(const uint8_t* buf, size_t len)
+uint32_t
+ix_packet_est_len(const uint8_t* buf, uint32_t len)
 {
-  bool   has_dropped;
-  size_t ret;
+  bool     has_dropped;
+  uint32_t ret;
 
   if (len == 0) {
     return 4;
@@ -300,7 +304,7 @@ ix_packet_error(const ix_packet* p)
 { return _ix_assert_type(p, IX_PAC_ERROR)->error; }
 
 uint16_t
-ix_packet_ch(const ix_packet* p, size_t channel)
+ix_packet_ch(const ix_packet* p, uint8_t channel)
 {
   assert(channel < p->samples_dropped.samples.n);
   return p->samples_dropped.samples.data[channel];

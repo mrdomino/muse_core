@@ -1,4 +1,9 @@
-/* Copyright 2015 Steven Dee. */
+/*
+ * Copyright 2015 Steven Dee.
+ *
+ * Redistributable under the terms of the GNU General Public License,
+ * version 2. No warranty is implied by this distribution.
+ */
 
 /*
  * Muse Core library, batteries included.
@@ -14,13 +19,10 @@
 extern "C" {
 #endif
 
-#include <stddef.h>
 #include <stdint.h>
 
 #include "defs.h"
 #include "packet.h"
-#include "serial.h"
-#include "util.h"
 
 #ifdef __cplusplus
 }
