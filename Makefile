@@ -14,7 +14,7 @@ else
   endif
 endif
 
--include config.$(OS).mk
+-include mk/config.$(OS).mk
 
 SRCDIR = src
 BUILDDIR = build
