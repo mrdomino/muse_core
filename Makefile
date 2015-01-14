@@ -99,7 +99,7 @@ $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 clean:
 	@echo cleaning
 	@rm -f benchmark unittests $(MUSE_CORE_A) $(MUSE_CORE_S) \
-	@  $(MUSE_CORE_A_O) $(MUSE_CORE_S_O)
+	@  $(MUSE_CORE_A_O) $(MUSE_CORE_S_O) $(MUSE_CORE_H)
 
 DIST = \
   $(foreach inc,$(MUSE_CORE_INC),$(INCDIR)/muse_core/$(inc).h) \
