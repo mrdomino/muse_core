@@ -1,3 +1,10 @@
+********************************************************************************
+**    NOTE: This is not the Muse SDK. It has no connection to the official    **
+**      SDK, and is not an Interaxon project. It was mostly written over      **
+**  holidays and weekends as an exercise in learning the Muse data protocol   **
+**                 and the Hammer parser combinator library.                  **
+********************************************************************************
+
 Muse Core
 ---------
 
