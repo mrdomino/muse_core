@@ -46,7 +46,7 @@ MUSE_CORE_S_O = $(foreach mod,$(MUSE_CORE_MOD),$(BUILDDIR_S)/src/$(mod).o)
 MUSE_CORE_A = $(BUILDLIBDIR)/$(LIB)muse_core.$A
 MUSE_CORE_S = $(BUILDLIBDIR)/$(LIB)muse_core.$S
 
-all: options dirs deps copy-headers lib
+all: options deps copy-headers lib
 
 options:
 	@echo build options:
@@ -63,15 +63,9 @@ options:
 	@echo "SKIP_TESTS         = $(SKIP_TESTS)"
 	@echo
 
-DIRS = $(BUILDLIBDIR) $(BUILDINCDIR)/muse_core \
-       $(BUILDDIR_S)/src $(BUILDDIR_A)/src \
-       $(BUILDDIR_A)/test $(BUILDDIR_A)/examples \
-
 DISTDIRS = $(INCDIR)/muse_core $(LIBDIR)
 
-dirs: $(DIRS)
-
-$(DIRS) $(DISTDIRS):
+$(DISTDIRS):
 	@echo mkdir $@
 	@mkdir -p $@
 
@@ -103,8 +97,9 @@ $(BUILDDIR_A)/src/%.o: $(SRCDIR)/%.c $(MUSE_CORE_H)
 	@$(CC) -c -o $@ $(CFLAGS) $<
 
 clean:
-	rm -rf $(BUILDDIR_A) $(BUILDDIR_S)
-	rm -f benchmark unittests $(MUSE_CORE_A) $(MUSE_CORE_S)
+	@echo cleaning
+	@rm -f benchmark unittests $(MUSE_CORE_A) $(MUSE_CORE_S) \
+	@  $(MUSE_CORE_A_O) $(MUSE_CORE_S_O)
 
 DIST = \
   $(foreach inc,$(MUSE_CORE_INC),$(INCDIR)/muse_core/$(inc).h) \
@@ -122,22 +117,24 @@ $(LIBDIR)/%: $(BUILDLIBDIR)/%
 	@cp $< $@
 
 distclean:
-	rm -rf $(DIST)
-	-rmdir -p $(DISTDIRS)
+	@echo rm $(DIST)
+	@rm -f $(DIST)
+	@echo rmdir $(DISTDIRS)
+	@-rmdir -p $(DISTDIRS) >/dev/null 2>&1
 
-install: dirs copy-headers lib
+install: copy-headers lib
 	make dist DESTDIR=
 
 uninstall:
 	make distclean DESTDIR=
 
-.PHONY: all clean copy-headers default deps dirs dist distclean install lib \
+.PHONY: all clean copy-headers default deps dist distclean install lib \
         mark options uninstall
 
 
 BENCHMARK_A_O = $(BUILDDIR_A)/test/packet_benchmark.o
 
-mark: dirs benchmark
+mark: benchmark
 	./benchmark
 
 benchmark: $(BENCHMARK_A_O) $(MUSE_CORE_S) $(HAMMER_A)
@@ -164,11 +161,11 @@ all: test
 
 .PHONY: test
 
-test: dirs unittests
+test: unittests
 	@echo unittests
 	@./unittests
 
-UNITTEST_MOD = packet_test
+UNITTEST_MOD = muse_core_test packet_test
 UNITTEST_A_O = $(foreach mod,$(UNITTEST_MOD),$(BUILDDIR_A)/test/$(mod).o)
 
 $(UNITTEST_A_O): $(MUSE_CORE_H)
