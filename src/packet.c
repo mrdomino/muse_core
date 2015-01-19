@@ -73,12 +73,6 @@ enum {
   TT_ix_samples_n,
 };
 
-/*
- * Action and validation to match packet type codes with our own enum values.
- */
-#define _ACT_VALIDATE_TYPE(N, T, C)                         \
-  H_VALIDATE_APPLY(validate_type_ ##N, _uint_const_attr, C) \
-  H_ACT_APPLY(act_type_ ##N, _make_uint_const, T)
 #define _SRULE(N, P) H_RULE(N, h_action(P, act_ix_samples_n, NULL))
 #define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
 #define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
@@ -95,15 +89,8 @@ IX_EXPORT HParser *g_ix_packet;
  *
  * These are mostly reusable across a bunch of different parsers. If they have
  * arguments before the HParseResult, those arguments are designed to be filled
- * by H_ACT_APPLY or H_VALIDATE_APPLY.
+ * by H_ACT_APPLY.
  */
-
-static bool
-_uint_const_attr(uint64_t v, const HParseResult* p, void* user_data)
-{
-  IX_UNUSED(user_data);
-  return H_CAST_UINT(p->ast) == v;
-}
 
 static HParsedToken*
 _make_uint_const(uint64_t x, const HParseResult* p, void* user_data)
@@ -169,11 +156,6 @@ static HAction act_type_eeg_dropped = act_type_eeg;
 H_ACT_APPLY(act_type_drlref, _make_uint_const, IX_PAC_DRLREF)
 H_ACT_APPLY(act_type_battery, _make_uint_const, IX_PAC_BATTERY)
 H_ACT_APPLY(act_type_error, _make_uint_const, IX_PAC_ERROR)
-H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
-H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
-H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
-H_ACT_APPLY(act_prefix_no_dropped, _make_uint_const, 0)
-H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
 
 H_ACT_APPLY(act_packet_sync, _make_packet_generic,
             IX_PAC_SYNC, (uint64_t)0)
