@@ -132,41 +132,35 @@ act_ix_samples_n(const HParseResult* p, void* user_data)
   return H_MAKE(ix_samples_n, out);
 }
 
-enum _data_type {
-    _DAT_NONE,
-    _DAT_WORD,
-    _DAT_SAMP,
-};
-
 static HParsedToken*
-_make_packet_generic(ix_pac_type type, enum _data_type data_type,
-                     bool has_dropped_samples, const HParseResult* p,
-                     void* user_data)
+_make_packet_word(ix_pac_type type, uint64_t word,
+                  const HParseResult* p, void* user_data)
 {
-  ix_packet *pac;
-  uint8_t   data_field;
+  ix_packet *pac = H_ALLOC(ix_packet);
 
   IX_UNUSED(user_data);
-  pac = H_ALLOC(ix_packet);
   pac->type = type;
-  if (has_dropped_samples) {
-      data_field = 2;
-      pac->samples_dropped.dropped = H_FIELD_UINT(1);
-  }
-  else data_field = 1;
-  switch (data_type) {
-  case _DAT_NONE:
-    break;
-  case _DAT_SAMP:
-    pac->samples_dropped.samples = *H_FIELD(ix_samples_n, data_field);
-    break;
-  case _DAT_WORD:
-    pac->error = H_FIELD_UINT(data_field);
-    break;
-  default: assert(false);
-  }
+  pac->error = word;
   return H_MAKE(ix_packet, pac);
 }
+
+static HParsedToken*
+_make_packet_samples(ix_pac_type type,
+                     struct _samples_dropped samples_dropped,
+                     const HParseResult* p, void* user_data)
+{
+  ix_packet *pac = H_ALLOC(ix_packet);
+
+  IX_UNUSED(user_data);
+  pac->type = type;
+  pac->samples_dropped = samples_dropped;
+  return H_MAKE(ix_packet, pac);
+}
+
+#define _make_packet_generic(T, D, ...) _Generic((D),   \
+  uint64_t: _make_packet_word,                          \
+  struct _samples_dropped: _make_packet_samples         \
+)(T, D, __VA_ARGS__)
 
 H_ACT_APPLY(act_type_acc, _make_uint_const, IX_PAC_ACCELEROMETER)
 static HAction act_type_acc_dropped = act_type_acc;
@@ -175,20 +169,23 @@ static HAction act_type_eeg_dropped = act_type_eeg;
 H_ACT_APPLY(act_type_drlref, _make_uint_const, IX_PAC_DRLREF)
 H_ACT_APPLY(act_type_battery, _make_uint_const, IX_PAC_BATTERY)
 H_ACT_APPLY(act_type_error, _make_uint_const, IX_PAC_ERROR)
-
 H_VALIDATE_APPLY(validate_flags_dropped, _uint_const_attr, 0x8)
 H_VALIDATE_APPLY(validate_flags_no_dropped, _uint_const_attr, 0)
 H_VALIDATE_APPLY(validate_packet_sync, _uint_const_attr, 0x55aaffff)
 H_ACT_APPLY(act_prefix_no_dropped, _make_uint_const, 0)
 H_ACT_APPLY(act_prefix_dropped, _make_uint_const, H_FIELD_UINT(1))
+
 H_ACT_APPLY(act_packet_sync, _make_packet_generic,
-            IX_PAC_SYNC, _DAT_NONE, false)
+            IX_PAC_SYNC, (uint64_t)0)
 H_ACT_APPLY(act_packet_error, _make_packet_generic,
-            (ix_pac_type)H_FIELD_UINT(0), _DAT_WORD, false)
+            (ix_pac_type)H_FIELD_UINT(0), H_FIELD_UINT(1))
 H_ACT_APPLY(act_ix_packet_no_dropped, _make_packet_generic,
-            (ix_pac_type)H_FIELD_UINT(0), _DAT_SAMP, false)
+            (ix_pac_type)H_FIELD_UINT(0),
+            ((struct _samples_dropped){*H_FIELD(ix_samples_n, 1), 0}))
 H_ACT_APPLY(act_ix_packet_maybe_dropped, _make_packet_generic,
-            (ix_pac_type)H_FIELD_UINT(0), _DAT_SAMP, true)
+            (ix_pac_type)H_FIELD_UINT(0),
+            ((struct _samples_dropped){*H_FIELD(ix_samples_n, 2),
+                                       H_FIELD_UINT(1)}))
 
 IX_INITIALIZER(_ix_packet_init)
 {
@@ -242,7 +239,7 @@ IX_INITIALIZER(_ix_packet_init)
   _PRULE(packet_drlref,
          h_sequence(type_drlref, samples_drlref, NULL));
   _PRULE(packet_battery,
-          h_sequence(type_battery, data_battery, NULL));
+         h_sequence(type_battery, data_battery, NULL));
   H_ARULE(packet_error,
           h_sequence(type_error, word, NULL));
 
