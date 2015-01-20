@@ -146,20 +146,20 @@ _make_packet_word(ix_pac_type type, uint64_t word,
 
 static HParsedToken*
 _make_packet_samples(ix_pac_type type,
-                     struct _samples_dropped samples_dropped,
+                     struct _samples_dropped* samples_dropped,
                      const HParseResult* p, void* user_data)
 {
   ix_packet *pac = H_ALLOC(ix_packet);
 
   IX_UNUSED(user_data);
   pac->type = type;
-  pac->samples_dropped = samples_dropped;
+  pac->samples_dropped = *samples_dropped;
   return H_MAKE(ix_packet, pac);
 }
 
 #define _make_packet_generic(T, D, ...) _Generic((D),   \
   uint64_t: _make_packet_word,                          \
-  struct _samples_dropped: _make_packet_samples         \
+  struct _samples_dropped*: _make_packet_samples        \
 )(T, D, __VA_ARGS__)
 
 _ACT_VALIDATE_TYPE(drlref, IX_PAC_DRLREF, 0x9)
@@ -179,11 +179,11 @@ H_ACT_APPLY(act_packet_error, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0), H_FIELD_UINT(2))
 H_ACT_APPLY(act_ix_packet_no_dropped, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0),
-            ((struct _samples_dropped){*H_FIELD(ix_samples_n, 2), 0}))
+            &((struct _samples_dropped){*H_FIELD(ix_samples_n, 2), 0}))
 H_ACT_APPLY(act_ix_packet_maybe_dropped, _make_packet_generic,
             (ix_pac_type)H_FIELD_UINT(0),
-            ((struct _samples_dropped){*H_FIELD(ix_samples_n, 2),
-                                       H_FIELD_UINT(1)}))
+            &((struct _samples_dropped){*H_FIELD(ix_samples_n, 2),
+                                        H_FIELD_UINT(1)}))
 
 IX_INITIALIZER(_ix_packet_init)
 {
