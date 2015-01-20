@@ -68,10 +68,8 @@ struct _ix_packet {
 /*
  * Hammer token types -- used by H_MAKE, H_CAST, H_FIELD, etc.
  */
-enum {
-  TT_ix_packet = TT_USER,
-  TT_ix_samples_n,
-};
+static HTokenType
+TT_ix_packet, TT_ix_samples_n;
 
 /*
  * Action and validation to match packet type codes with our own enum values.
@@ -82,6 +80,8 @@ enum {
 #define _SRULE(N, P) H_RULE(N, h_action(P, act_ix_samples_n, NULL))
 #define _PRULE(N, P) H_RULE(N, h_action(P, act_ix_packet_no_dropped, NULL))
 #define _PRULE_D(N, P) H_RULE(N, h_action(P, act_ix_packet_maybe_dropped, NULL))
+
+#define TT_NEW(N) TT_ ##N = h_allocate_token_type(#N)
 
 /*
  * Top-level packet parser. Exported for use in benchmarking code, but not
@@ -193,6 +193,8 @@ IX_INITIALIZER(_ix_packet_init)
   assert(!inited);
   inited = 1;
 #endif
+  TT_NEW(ix_packet);
+  TT_NEW(ix_samples_n);
   H_RULE(nibble,
          h_with_endianness(BIT_BIG_ENDIAN, h_bits(4, false)));
   H_RULE(short_,    /* TODO(someday): little endian shorts */
